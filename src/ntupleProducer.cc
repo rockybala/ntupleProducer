@@ -1,3 +1,4 @@
+//brian sucks
 #include "../interface/ntupleProducer.h"
 
 ntupleProducer::ntupleProducer(const edm::ParameterSet& iConfig)
