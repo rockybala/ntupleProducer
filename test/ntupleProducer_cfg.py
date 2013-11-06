@@ -6,16 +6,19 @@ from RecoEgamma.PhotonIdentification.isolationCalculator_cfi import *
 process = cms.Process("NTUPLE")
 
 options = VarParsing.VarParsing ('analysis')
-options.maxEvents = 1000
+options.maxEvents = 10
 #options.inputFiles= '/store/data/Run2012C/SingleMu/AOD/22Jan2013-v1/30010/C0E05558-9078-E211-9E02-485B39800B65.root'
 #options.inputFiles= '/store/data/Run2012C/DoublePhoton/AOD/22Jan2013-v2/30001/72DE4526-F370-E211-B370-00304867920A.root'
-#options.loadFromFile('inputFiles','PYTHIA8_175_POWHEG_H_Zg_8TeV.txt')
-options.inputFiles = '/store/data/Run2012A/DoubleElectron/AOD/13Jul2012-v1/00000/00347915-EED9-E111-945A-848F69FD2817.root'
+#options.loadFromFile('inputFiles','PYTHIA8_175_H_Zg_8TeV.txt')
+#options.loadFromFile('inputFiles','PYTHIA8_175_POWHEG_PDF7_H_Zg_8TeV.txt')
+#options.inputFiles = '/store/data/Run2012A/DoubleElectron/AOD/13Jul2012-v1/00000/00347915-EED9-E111-945A-848F69FD2817.root'
+#options.inputFiles = '/store/user/andrey/Higgs_To_MuMuGamma_Dalitz_MH125_Mll_0to50_MadgraphHEFT_pythia6/AODSIM_v2/39bf61f738ba3bdb8860f0848073cc88/aodsim_100_1_hLi.root'
 #'/store/mc/Summer12_DR53X/DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball/AODSIM/PU_S10_START53_V7A-v1/0002/D843FB2D-44D4-E111-A3C4-002481E75ED0.root'
 #options.inputFiles = 'file:/uscms_data/d2/bpollack/genProd/CMSSW_5_3_8/src/test/testOut2_v2/PYTHIA8_175_POWHEG_H_Zg_8TeV_cff_py_GEN_SIM_REDIGI_DIGI_L1_DIGI2RAW_HLT_PU_STEP2_RAW2DIGI_L1Reco_RECO_VALIDATION_DQM_PU_50.root'
+options.inputFiles = '/store/mc/Summer12_DR53X/DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball/AODSIM/PU_S10_START53_V7A-v1/0000/02CDCF05-BED2-E111-85F4-0030486740BA.root'
 #options.inputFiles = '/store/user/andrey/MCFM_lord_hzgamma_8TeV_LHE_pythia6_v2/AODSIM/39bf61f738ba3bdb8860f0848073cc88/aodsim_100_1_BGG.root'
 #options.inputFiles = '/store/data/Run2012D/SinglePhotonParked/AOD/22Jan2013-v1/30004/144D7268-4086-E211-9DC1-001E673984C1.root'
-#options.inputFiles = 'file:/uscms_data/d2/bpollack/genProd/CMSSW_5_3_8/src/test/testOut2_v3/PYTHIA8_175_POWHEG_H_Zg_8TeV_cff_py_GEN_SIM_REDIGI_DIGI_L1_DIGI2RAW_HLT_PU_STEP2_RAW2DIGI_L1Reco_RECO_VALIDATION_DQM_PU_8.root'
+#options.inputFiles = 'file:/uscms_data/d2/bpollack/genProd/CMSSW_5_3_8/src/test/testOut2_v2/PYTHIA8_175_POWHEG_H_Zg_8TeV_cff_py_GEN_SIM_REDIGI_DIGI_L1_DIGI2RAW_HLT_PU_STEP2_RAW2DIGI_L1Reco_RECO_VALIDATION_DQM_PU_8.root'
 
 options.register("isRealData",
                  0,
@@ -24,12 +27,6 @@ options.register("isRealData",
                  "0 if running on MC and 1 if running on Data")
 
 options.parseArguments()
-
-## In case you are running over a privately produced MC sample, that is generatet in _one step_,
-## you probably need to use "HLT" for both recoTier and hltTier.
-## Unless you changed the name of your process. In that case it should be that name.
-#recoTier = "RECO"
-#hltTier  = "HLT"
 
 # real data or MC?
 isRealData = options.isRealData
@@ -279,8 +276,7 @@ AllFilters = cms.Sequence(process.HBHENoiseFilterResultProducer
                           * ~process.toomanystripclus53X #trkPOGFilter2
                           * ~process.logErrorTooManyClusters #trkPOGFilter 3
                           )
-
-
+##### END OF Noise Filters ############
 
 
 # Electron MVA ID producer:
@@ -292,8 +288,6 @@ process.eleRegressionEnergy.inputElectronsTag    = cms.InputTag('gsfElectrons')
 process.eleRegressionEnergy.inputCollectionType  = cms.uint32(0)
 process.eleRegressionEnergy.useRecHitCollections = cms.bool(True)
 process.eleRegressionEnergy.produceValueMaps     = cms.bool(True)
-#process.eleRegressionEnergy.energyRegressionType = cms.uint32(1)
-#process.eleRegressionEnergy.regressionInputFile = cms.string("EgammaAnalysis/ElectronTools/data/eleEnergyReg2012Weights_V1.root")
 process.eleRegressionEnergy.energyRegressionType = cms.uint32(2)
 process.eleRegressionEnergy.regressionInputFile = cms.string("EgammaAnalysis/ElectronTools/data/eleEnergyRegWeights_WithSubClusters_VApr15.root")
 
@@ -311,12 +305,13 @@ if (isRealData):
 else:
   process.calibratedElectrons.isMC = cms.bool(True)
   process.calibratedElectrons.inputDataset = cms.string("Summer12_LegacyPaper")
+
 process.calibratedElectrons.updateEnergyError = cms.bool(True)
-process.calibratedElectrons.correctionsType = cms.int32(2)
-process.calibratedElectrons.combinationType = cms.int32(3)
-process.calibratedElectrons.lumiRatio = cms.double(1.0)
-process.calibratedElectrons.verbose = cms.bool(False)
-process.calibratedElectrons.synchronization = cms.bool(False)
+process.calibratedElectrons.correctionsType   = cms.int32(2)
+process.calibratedElectrons.combinationType   = cms.int32(3)
+process.calibratedElectrons.lumiRatio         = cms.double(1.0)
+process.calibratedElectrons.verbose           = cms.bool(False)
+process.calibratedElectrons.synchronization   = cms.bool(False)
 process.calibratedElectrons.applyLinearityCorrection = cms.bool(True)
 #process.calibratedElectrons.scaleCorrectionsInputPath = cms.string("EgammaAnalysis/ElectronTools/data/scalesMoriond.csv")
 #process.calibratedElectrons.combinationRegressionInputPath = cms.string("EgammaAnalysis/ElectronTools/data/eleEnergyReg2012Weights_V1.root")
@@ -329,14 +324,12 @@ process.source = cms.Source("PoolSource",
 )
 
 
-##### END OF Noise Filters ############
-
 print '\n\nCommence ntuplization...\n\n'
 
 ### TFile service!
 process.TFileService = cms.Service('TFileService',
-                                  fileName = cms.string('nuTuple.root')
-                                  #fileName = cms.string('~/EOS/V08_00_8TeV/ggHZG_M125_Pythia8_175_v3/nuTuple_9.root')
+    #fileName = cms.string('nuTuple.root')
+    fileName = cms.string('~/EOS/V08_01_8TeV/ggHZG_M125_Pythia8_175_POWHEG_PDF7/nuTuple_9.root')
                                    )
 
 ### pfNoPU Sequence for electron MVA
@@ -359,6 +352,31 @@ process.pfNoPileUp = cms.EDProducer("TPPFCandidatesOnPFCandidates",
 process.pfNoPUSeq = cms.Sequence(process.pfPileUp + process.pfNoPileUp)
 
 
+
+from SHarper.HEEPAnalyzer.HEEPSelectionCuts_cfi import *
+process.heepIdNoIso = cms.EDProducer("HEEPIdValueMapProducer",
+                                     eleLabel = cms.InputTag("gsfElectrons"),
+                                     barrelCuts = cms.PSet(heepBarrelCuts),
+                                     endcapCuts = cms.PSet(heepEndcapCuts),
+                                     eleIsolEffectiveAreas = cms.PSet(heepEffectiveAreas),
+                                     eleRhoCorrLabel = cms.InputTag("kt6PFJets", "rho"),
+                                     verticesLabel = cms.InputTag("offlinePrimaryVertices"),
+                                     applyRhoCorrToEleIsol = cms.bool(True),
+                                     writeIdAsInt = cms.bool(True)
+                                     )
+process.heepIdNoIso.barrelCuts.cuts=cms.string("et:detEta:ecalDriven:dEtaIn:dPhiIn:hadem:e2x5Over5x5:nrMissHits:dxy")
+process.heepIdNoIso.endcapCuts.cuts=cms.string("et:detEta:ecalDriven:dEtaIn:dPhiIn:hadem:sigmaIEtaIEta:nrMissHits:dxy")
+
+process.heepIdNoIsoEles = cms.EDProducer("tsw::HEEPGsfProducer", cutValueMap = cms.InputTag("heepIdNoIso"),
+                                         inputGsfEles = cms.InputTag("gsfElectrons")  )
+
+# Boosted Z ModEleIso: 1b) Calculating the modified iso. values using BstdZeeTools EDProducer
+
+from TSWilliams.BstdZeeTools.bstdzeemodisolproducer_cff import *
+process.modElectronIso = cms.EDProducer("BstdZeeModIsolProducer",
+                                              bstdZeeModIsolParams, vetoGsfEles = cms.InputTag("heepIdNoIsoEles") )
+
+
 ### ntuple producer
 process.ntupleProducer   = cms.EDAnalyzer('ntupleProducer',
 
@@ -377,7 +395,7 @@ process.ntupleProducer   = cms.EDAnalyzer('ntupleProducer',
   MuonTag           =    cms.untracked.InputTag('muons'),
   PhotonTag         =    cms.untracked.InputTag('photons'),
   PrimaryVtxTag     =    cms.untracked.InputTag('offlinePrimaryVertices'),
-  rhoCorrTag        =    cms.untracked.InputTag('kt6PFJets', 'rho', 'RECO'),
+  rhoCorrTag        =    cms.untracked.InputTag('kt6PFJets',    'rho', 'RECO'),
   rho25CorrTag      =    cms.untracked.InputTag('kt6PFJetsIso', 'rho', 'NTUPLE'),
   rhoMuCorrTag      =    cms.untracked.InputTag('kt6PFJetsCentralNeutral', 'rho','RECO'),  # specifically for muon iso
 
@@ -387,16 +405,17 @@ process.ntupleProducer   = cms.EDAnalyzer('ntupleProducer',
   partFlowTag       =  cms.untracked.InputTag("particleFlow"), #,"Cleaned"),
   skimLepton        =  cms.untracked.bool(False),
 
+  saveMuons         =    cms.untracked.bool(True),
   saveJets          =    cms.untracked.bool(True),
   saveElectrons     =    cms.untracked.bool(True),
-  saveMuons         =    cms.untracked.bool(True),
+  saveEleCrystals   =    cms.untracked.bool(True),
   savePhotons       =    cms.untracked.bool(True),
+  savePhoCrystals   =    cms.untracked.bool(True),
+  saveMoreEgammaVars=    cms.untracked.bool(True),
+
   saveMET           =    cms.untracked.bool(True),
   saveGenJets       =    cms.untracked.bool(True),
   saveGenParticles  =    cms.untracked.bool(True),
-  saveTrackMET      =    cms.untracked.bool(True),
-  saveT0MET	    =    cms.untracked.bool(True),
-  saveT2MET	    =    cms.untracked.bool(True),
 
   ecalTPFilterTag    =    cms.untracked.InputTag("EcalDeadCellTriggerPrimitiveFilter",""),
   ecalBEFilterTag    =    cms.untracked.InputTag("EcalDeadCellBoundaryEnergyFilter",""),
@@ -407,6 +426,11 @@ process.ntupleProducer   = cms.EDAnalyzer('ntupleProducer',
   trkPOGFiltersTag1  =    cms.untracked.InputTag("manystripclus53X",""),
   trkPOGFiltersTag2  =    cms.untracked.InputTag("toomanystripclus53X",""),
   trkPOGFiltersTag3  =    cms.untracked.InputTag("logErrorTooManyClusters",""),
+
+  #for SC footprint removal
+
+  isolation_cone_size_forSCremoval = cms.untracked.double(0.3),
+
 
   hltName           =    cms.untracked.string("HLT"),
   triggers          =    cms.untracked.vstring(
@@ -471,6 +495,11 @@ process.ntuplePath = cms.Path(
     * process.eleRegressionEnergy
     * process.calibratedElectrons
     * process.mvaTrigV0
+
+    * process.heepIdNoIso
+    * process.heepIdNoIsoEles
+    * process.modElectronIso
+
     * process.ntupleProducer
 )
 

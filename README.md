@@ -14,7 +14,7 @@ Instructions for Users
 ```
 (note: _patch6 is recommended in met recepie)
 
- * Met recipes, according to [2] and [3]:
+ * Met recipes, according to [workbook][2] and [met-recipe][3]:
 ```
   git cms-addpkg PhysicsTools/PatAlgos
   git cms-merge-topic -u vadler:53X-tagset133511
@@ -23,7 +23,7 @@ Instructions for Users
   scram b -j 9
 ```
  
- * Met filters according to [4]:
+ * Met filters according to [MissingETOptionalFilters][4]:
 ```
   cvs co -r V00-00-13-01 RecoMET/METFilters
   cvs co -r V00-03-23 CommonTools/RecoAlgos
@@ -77,10 +77,26 @@ Instructions for Users
   cvs co -r V01-04-13                             RecoTauTag/Configuration
 ```
 
+ * Extra code (for boosted Z->ee isolation), following [6] and [7]:
+```
+  cvs co -r V00-02-03 -d TSWilliams/BstdZeeTools  UserCode/TSWilliams/BstdZee/BstdZeeTools
+  cvs co -r V00-09-03 -d SHarper/HEEPAnalyzer UserCode/SHarper/HEEPAnalyzer 
+```
+
+ * PF footprint removal [Supercluster footprint removal twiki][8]:
+```
+  git clone https://github.com/peruzzim/SCFootprintRemoval.git
+  cd SCFootprintRemoval
+  git checkout V01-06
+  cd ..
+  mkdir PFIsolation
+  mv SCFootprintRemoval PFIsolation/SuperClusterFootprintRemoval
+```
+
  * Files that needs to be updated, or not??:
 ```
   cvs co -r V03-04-07 DataFormats/METReco/interface/CorrMETData.h
-  # These did not work (couldn't check out):
+  # These did not work (could not check out):
   #cvs co -r HEAD JetMETCorrections/Type1MET/plugins/Type0PFMETcorrInputProducer.h
   #cvs co -r HEAD JetMETCorrections/Type1MET/plugins/Type0PFMETcorrInputProducer.cc
 ```
@@ -89,7 +105,7 @@ Instructions for Users
 ```
  git clone https://github.com/NWUHEP/ntupleProducer NWU/ntupleProducer
  cd NWU/ntupleProducer
- git checkout v8.1
+ git checkout master 
  cd ../..
 ```
 
@@ -104,11 +120,10 @@ Instructions for Users
   cp NWU/ntupleProducer/patches/mvaPFMET_leptons_data_cff.py JetMETCorrections/METPUSubtraction/python/mvaPFMET_leptons_data_cff.py
   cp NWU/ntupleProducer/patches/mvaPFMET_leptons_cff.py JetMETCorrections/METPUSubtraction/python/mvaPFMET_leptons_cff.py
   cp NWU/ntupleProducer/patches/mvaPFMET_leptons_cfi.py JetMETCorrections/METPUSubtraction/python/mvaPFMET_leptons_cfi.py
+  cp NWU/ntupleProducer/patches/PFMETAlgorithmMVA.cc JetMETCorrections/METPUSubtraction/src/. 
 
   scram b -j 9
 ```
-
-
 
 Once compiled, we are ready to run it
 ### Runnning the code
@@ -182,7 +197,10 @@ If the new code significantly changes the format of the ntuples (substantial cha
 
 
 [1]: https://twiki.cern.ch/twiki/bin/view/CMS/UserCodeNWUntupleProducer
-[3]: https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMETRecipe53X
 [2]: https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMetAnalysis
+[3]: https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMETRecipe53X
 [4]: https://twiki.cern.ch/twiki/bin/view/CMS/MissingETOptionalFilters
 [5]: https://twiki.cern.ch/twiki/bin/view/CMS/MultivariateElectronIdentification
+[6]: https://twiki.cern.ch/twiki/bin/viewauth/CMS/BoostedZToEEModIso
+[7]: https://twiki.cern.ch/twiki/bin/view/CMS/HEEPSelector
+[8]: https://twiki.cern.ch/twiki/bin/viewauth/CMS/SuperClusterFootprintRemoval
