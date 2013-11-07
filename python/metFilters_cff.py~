@@ -1,0 +1,83 @@
+import FWCore.ParameterSet.Config as cms
+
+process = cms.Process("NTUPLE")
+
+#############################################
+#### Met/Noise/BeamHalo filters  #############
+## Following the recipe from this twiki:
+## https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFilters
+## Using *Tagging mode* for all filters (produces the boolean instead of filtering an event)
+## Saving this boolean in the ntuples!
+##############################################
+
+## The iso-based HBHE noise filter
+process.load('CommonTools/RecoAlgos/HBHENoiseFilterResultProducer_cfi')
+
+## This might need updating for the VBF Parked - waiting for the recommendation
+process.load("RecoMET.METFilters.hcalLaserEventFilter_cfi")
+process.hcalLaserEventFilter.vetoByRunEventNumber=cms.untracked.bool(False)
+process.hcalLaserEventFilter.vetoByHBHEOccupancy=cms.untracked.bool(True)
+process.hcalLaserEventFilter.taggingMode = cms.bool(True)
+
+## Ecal Dead Cell Filter
+process.load('RecoMET.METFilters.EcalDeadCellTriggerPrimitiveFilter_cfi')
+## For AOD and RECO recommendation to use recovered rechits
+process.EcalDeadCellTriggerPrimitiveFilter.tpDigiCollection = cms.InputTag("ecalTPSkimNA")
+process.EcalDeadCellTriggerPrimitiveFilter.taggingMode = cms.bool(True)
+
+# The section below is for the filter on Boundary Energy. Available in AOD in CMSSW>44x
+# For releases earlier than 44x, one should make the following changes
+# process.EcalDeadCellBoundaryEnergyFilter.recHitsEB = cms.InputTag("ecalRecHit","EcalRecHitsEB")
+# process.EcalDeadCellBoundaryEnergyFilter.recHitsEE = cms.InputTag("ecalRecHit","EcalRecHitsEE")
+process.load('RecoMET.METFilters.EcalDeadCellBoundaryEnergyFilter_cfi')
+process.EcalDeadCellBoundaryEnergyFilter.taggingMode = cms.bool(True)
+process.EcalDeadCellBoundaryEnergyFilter.cutBoundEnergyDeadCellsEB=cms.untracked.double(10)
+process.EcalDeadCellBoundaryEnergyFilter.cutBoundEnergyDeadCellsEE=cms.untracked.double(10)
+process.EcalDeadCellBoundaryEnergyFilter.cutBoundEnergyGapEB=cms.untracked.double(100)
+process.EcalDeadCellBoundaryEnergyFilter.cutBoundEnergyGapEE=cms.untracked.double(100)
+process.EcalDeadCellBoundaryEnergyFilter.enableGap=cms.untracked.bool(False)
+process.EcalDeadCellBoundaryEnergyFilter.limitDeadCellToChannelStatusEB = cms.vint32(12,14)
+process.EcalDeadCellBoundaryEnergyFilter.limitDeadCellToChannelStatusEE = cms.vint32(12,14)
+# End of Boundary Energy filter configuration
+
+## The Good vertices collection needed by the tracking failure filter
+process.goodVertices = cms.EDFilter(
+          "VertexSelector",
+                  filter = cms.bool(False),
+                  src = cms.InputTag("offlinePrimaryVertices"),
+          #        src = cms.InputTag("offlinePrimaryVerticesWithBS"),
+                  cut = cms.string("!isFake && ndof > 4 && abs(z) <= 24 && position.rho < 2")
+                )
+## The tracking failure filter
+process.load('RecoMET.METFilters.trackingFailureFilter_cfi')
+process.trackingFailureFilter.taggingMode = cms.bool(True)
+
+#Bad EE SC filter, not needed but goot to have them
+process.load('RecoMET.METFilters.eeBadScFilter_cfi')
+process.eeBadScFilter.tagginMode = cms.bool(True)
+
+## The tracking POG filters
+process.load('RecoMET.METFilters.trackingPOGFilters_cff')
+## NOTE: to make tagging mode of the tracking POG filters (three of them), please do:
+process.manystripclus53X.taggedMode = cms.untracked.bool(True)
+process.manystripclus53X.forcedValue = cms.untracked.bool(False)
+process.toomanystripclus53X.taggedMode = cms.untracked.bool(True)
+process.toomanystripclus53X.forcedValue = cms.untracked.bool(False)
+process.logErrorTooManyClusters.taggedMode = cms.untracked.bool(True)
+process.logErrorTooManyClusters.forcedValue = cms.untracked.bool(False)
+## Also the stored boolean for the three filters is opposite to what we usually
+## have for other filters, i.e., true means rejected bad events while false means
+## good events.
+
+metFilters = cms.Sequence(process.HBHENoiseFilterResultProducer
+                                                    * process.hcalLaserEventFilter
+                                                    * process.EcalDeadCellTriggerPrimitiveFilter
+                                                    * process.EcalDeadCellBoundaryEnergyFilter
+                                                    * process.goodVertices * process.trackingFailureFilter
+                                                    * process.eeBadScFilter
+                                                    #* process.trkPOGFilters
+                                                    * ~process.manystripclus53X #trkPOGFilter1
+                                                    * ~process.toomanystripclus53X #trkPOGFilter2
+                                                    * ~process.logErrorTooManyClusters #trkPOGFilter 3
+                                                    )
+##### END OF Noise Filters ############

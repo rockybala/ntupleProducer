@@ -46,15 +46,6 @@
 #include "DataFormats/METReco/interface/METCollection.h"
 #include "DataFormats/METReco/interface/METFwd.h"
 
-// PAT candidates
-#include "DataFormats/PatCandidates/interface/Jet.h"
-#include "DataFormats/PatCandidates/interface/Muon.h"
-#include "DataFormats/PatCandidates/interface/Electron.h"
-#include "DataFormats/PatCandidates/interface/MET.h"
-#include "DataFormats/PatCandidates/interface/MHT.h"
-#include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
-
-
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/MuonFwd.h"
 #include "DataFormats/MuonReco/interface/MuonSelectors.h"
