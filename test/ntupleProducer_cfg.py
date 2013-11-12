@@ -7,8 +7,8 @@ process = cms.Process("NTUPLE")
 
 options = VarParsing.VarParsing ('analysis')
 options.maxEvents = 10
-options.inputFiles = '/store/mc/Summer12_DR53X/DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball/AODSIM/PU_S10_START53_V7A-v1/0000/02CDCF05-BED2-E111-85F4-0030486740BA.root'
-#options.inputFiles = '/store/data/Run2012D/SinglePhotonParked/AOD/22Jan2013-v1/30004/144D7268-4086-E211-9DC1-001E673984C1.root'
+#options.inputFiles = '/store/mc/Summer12_DR53X/DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball/AODSIM/PU_S10_START53_V7A-v1/0000/02CDCF05-BED2-E111-85F4-0030486740BA.root'
+options.inputFiles = '/store/data/Run2012D/SinglePhotonParked/AOD/22Jan2013-v1/30004/144D7268-4086-E211-9DC1-001E673984C1.root'
 
 options.register("isRealData",
                  0,
@@ -87,10 +87,6 @@ from PhysicsTools.PatAlgos.tools.pfTools import *
 process.goodPhotonsHighPtCut = cms.EDFilter("PATPhotonSelector",
                                             src = cms.InputTag("patPhotons"),
                                             cut = cms.string('pt > 30.0 && hadronicOverEm < 0.5 && r9 > 0.9 && abs(superCluster.eta) < 1.4442 && sigmaIetaIeta < 0.011 '),
-                                            #" && trkSumPtHollowConeDR03  < 2.0*(3.5 + 0.001*superCluster.energy*sin(superCluster.position.theta))"
-                                            #" && ecalRecHitSumEtConeDR03 < 2.0*(4.2 + 0.006*superCluster.energy*sin(superCluster.position.theta))"
-                                            #" && hcalTowerSumEtConeDR03  < 2.0*(2.2 + 0.0025*superCluster.energy*sin(superCluster.position.theta))"
-                                            #),
                                             filter = cms.bool(False)
                                             )
 
@@ -400,55 +396,89 @@ process.modElectronIso = cms.EDProducer("BstdZeeModIsolProducer",
 ### ntuple producer
 process.ntupleProducer   = cms.EDAnalyzer('ntupleProducer',
 
-  verboseTrigs         =    cms.untracked.bool(False),
-  verboseMVAs          =    cms.untracked.bool(False),
+                                          verboseTrigs         =    cms.untracked.bool(False),
+                                          verboseMVAs          =    cms.untracked.bool(False),
+                                          
+                                          photonIsoCalcTag  =    cms.PSet(isolationSumsCalculator),
+                                          jetPUIdAlgo       =    cms.PSet(full_5x),
 
-  photonIsoCalcTag  =    cms.PSet(isolationSumsCalculator),
-  jetPUIdAlgo       =    cms.PSet(full_5x),
-
-  JetTag            =    cms.untracked.InputTag('ak5PFJetsL1FastL2L3'),
-  JecTag            =    cms.string("AK5PF"),
-  GenJetTag         =    cms.untracked.InputTag('ak5GenJets'),
-  ElectronTag       =    cms.untracked.InputTag('gsfElectrons'),
-  MuonTag           =    cms.untracked.InputTag('muons'),
-  PhotonTag         =    cms.untracked.InputTag('photons'),
-  PrimaryVtxTag     =    cms.untracked.InputTag('offlinePrimaryVertices'),
-  rhoCorrTag        =    cms.untracked.InputTag('kt6PFJets',    'rho', 'RECO'),
-  #rho25CorrTag      =    cms.untracked.InputTag('kt6PFJetsIso', 'rho', 'NTUPLE'),
-  rho25CorrTag      =    cms.untracked.InputTag('kt6PFJetsIso', 'rho', 'PAT'),
-  rhoMuCorrTag      =    cms.untracked.InputTag('kt6PFJetsCentralNeutral', 'rho','RECO'),  # specifically for muon iso
-
-  partFlowTag       =  cms.untracked.InputTag("particleFlow"), #,"Cleaned"),
-
-  ## MET FILTERS
-  ecalTPFilterTag    =    cms.untracked.InputTag("EcalDeadCellTriggerPrimitiveFilter",""),
-  ecalBEFilterTag    =    cms.untracked.InputTag("EcalDeadCellBoundaryEnergyFilter",""),
-  hcalHBHEFilterTag  =    cms.untracked.InputTag("HBHENoiseFilterResultProducer","HBHENoiseFilterResult"),
-  hcalLaserFilterTag =    cms.untracked.InputTag("hcalLaserEventFilter",""),
-  trackingFailureTag =    cms.untracked.InputTag("trackingFailureFilter",""),
-  eeBadScFilterTag   =    cms.untracked.InputTag("eeBadScFilter",""),
-  trkPOGFiltersTag1  =    cms.untracked.InputTag("manystripclus53X",""),
-  trkPOGFiltersTag2  =    cms.untracked.InputTag("toomanystripclus53X",""),
-  trkPOGFiltersTag3  =    cms.untracked.InputTag("logErrorTooManyClusters",""),
+                                          #All MET
+                                          srcPatPhoup         = cms.InputTag("shiftedGoodPhotonsHighPtCutEnUp"),
+                                          srcPatPhodown       = cms.InputTag("shiftedGoodPhotonsHighPtCutEnDown"),
+                                          srcPatPhoMvaup      = cms.InputTag("shiftedGoodPhotonsHighPtCutEnUpForPFMEtByMVA"),
+                                          srcPatPhoMvadown    = cms.InputTag("shiftedGoodPhotonsHighPtCutEnDownForPFMEtByMVA"),
+                                          
+                                          srcPatJets          = cms.InputTag("patJetsNotOverlappingWithLeptonsForJetMEtUncertainty"),#in our case photons only
+                                          srcSelectedJets     = cms.InputTag("selectedPatJets"),
+                                          srcSmearedJets      = cms.InputTag("smearedPatJets"),
+                                          srcMetRaw           = cms.InputTag("patPFMet"),                                
+                                          srcMetPf            = cms.InputTag("patMETsPF"),
+                                          
+                                          ################################################
+                                          srcMetCorrected     = cms.InputTag("patType1CorrectedPFMet"),
+                                          srcMetJERup         = cms.InputTag("patType1CorrectedPFMetJetResUp"),
+                                          srcMetJERdown       = cms.InputTag("patType1CorrectedPFMetJetResDown"),
+                                          srcMetPhoup         = cms.InputTag("patType1CorrectedPFMetPhotonEnUp"),
+                                          srcMetPhodown       = cms.InputTag("patType1CorrectedPFMetPhotonEnDown"),
+                                          srcMetJetup         = cms.InputTag("patType1CorrectedPFMetJetEnUp"),
+                                          srcMetJetdown       = cms.InputTag("patType1CorrectedPFMetJetEnDown"),
+                                          srcMetUncup         = cms.InputTag("patType1CorrectedPFMetUnclusteredEnUp"),
+                                          srcMetUncdown       = cms.InputTag("patType1CorrectedPFMetUnclusteredEnDown"),
+                                          ################################################
+                                          srcMVACorrected     = cms.InputTag("patPFMetMVA"),
+                                          srcMVAJERup         = cms.InputTag("patPFMetMVAJetResUp"),
+                                          srcMVAJERdown       = cms.InputTag("patPFMetMVAJetResDown"),
+                                          srcMVAPhoup         = cms.InputTag("patPFMetMVAPhotonEnUp"),
+                                          srcMVAPhodown       = cms.InputTag("patPFMetMVAPhotonEnDown"),
+                                          srcMVAJetup         = cms.InputTag("patPFMetMVAJetEnUp"),
+                                          srcMVAJetdown       = cms.InputTag("patPFMetMVAJetEnDown"),
+                                          srcMVAUncup         = cms.InputTag("patPFMetMVAUnclusteredEnUp"),
+                                          srcMVAUncdown       = cms.InputTag("patPFMetMVAUnclusteredEnDown"),
                                           
 
-  skimLepton        =  cms.untracked.bool(False),
-
-  saveMuons         =    cms.untracked.bool(True),
-  saveJets          =    cms.untracked.bool(True),
-  saveElectrons     =    cms.untracked.bool(True),
-  saveEleCrystals   =    cms.untracked.bool(True),
-  savePhotons       =    cms.untracked.bool(True),
-  savePhoCrystals   =    cms.untracked.bool(True),
-  saveMoreEgammaVars=    cms.untracked.bool(True),
-
-  saveMET           =    cms.untracked.bool(True),
-  saveGenJets       =    cms.untracked.bool(True),
-  saveGenParticles  =    cms.untracked.bool(True),
-
-    #for SC footprint removal
-
-  isolation_cone_size_forSCremoval = cms.untracked.double(0.3),
+                                                                                    
+                                          JetTag            =    cms.untracked.InputTag('ak5PFJetsL1FastL2L3'),
+                                          JecTag            =    cms.string("AK5PF"),
+                                          GenJetTag         =    cms.untracked.InputTag('ak5GenJets'),
+                                          ElectronTag       =    cms.untracked.InputTag('gsfElectrons'),
+                                          MuonTag           =    cms.untracked.InputTag('muons'),
+                                          PhotonTag         =    cms.untracked.InputTag('photons'),
+                                          PrimaryVtxTag     =    cms.untracked.InputTag('offlinePrimaryVertices'),
+                                          rhoCorrTag        =    cms.untracked.InputTag('kt6PFJets',    'rho', 'RECO'),
+                                          rho25CorrTag      =    cms.untracked.InputTag('kt6PFJetsIso', 'rho', 'PAT'),
+                                          rhoMuCorrTag      =    cms.untracked.InputTag('kt6PFJetsCentralNeutral', 'rho','RECO'),  # specifically for muon iso
+                                          
+                                          partFlowTag       =  cms.untracked.InputTag("particleFlow"), #,"Cleaned"),
+                                          
+                                          ## MET FILTERS
+                                          ecalTPFilterTag    =    cms.untracked.InputTag("EcalDeadCellTriggerPrimitiveFilter",""),
+                                          ecalBEFilterTag    =    cms.untracked.InputTag("EcalDeadCellBoundaryEnergyFilter",""),
+                                          hcalHBHEFilterTag  =    cms.untracked.InputTag("HBHENoiseFilterResultProducer","HBHENoiseFilterResult"),
+                                          hcalLaserFilterTag =    cms.untracked.InputTag("hcalLaserEventFilter",""),
+                                          trackingFailureTag =    cms.untracked.InputTag("trackingFailureFilter",""),
+                                          eeBadScFilterTag   =    cms.untracked.InputTag("eeBadScFilter",""),
+                                          trkPOGFiltersTag1  =    cms.untracked.InputTag("manystripclus53X",""),
+                                          trkPOGFiltersTag2  =    cms.untracked.InputTag("toomanystripclus53X",""),
+                                          trkPOGFiltersTag3  =    cms.untracked.InputTag("logErrorTooManyClusters",""),
+                                          
+                                          
+                                          skimLepton        =  cms.untracked.bool(False),
+                                          
+                                          saveMuons         =    cms.untracked.bool(True),
+                                          saveJets          =    cms.untracked.bool(True),
+                                          saveElectrons     =    cms.untracked.bool(True),
+                                          saveEleCrystals   =    cms.untracked.bool(True),
+                                          savePhotons       =    cms.untracked.bool(True),
+                                          savePhoCrystals   =    cms.untracked.bool(True),
+                                          saveMoreEgammaVars=    cms.untracked.bool(True),
+                                          saveMET           =    cms.untracked.bool(True),
+                                          saveMETExtra      =    cms.untracked.bool(True),                                        
+                                          saveGenJets       =    cms.untracked.bool(True),
+                                          saveGenParticles  =    cms.untracked.bool(True),
+                                          
+                                          #for SC footprint removal
+                                          
+                                          isolation_cone_size_forSCremoval = cms.untracked.double(0.3),
 
   hltName           =    cms.untracked.string("HLT"),
   triggers          =    cms.untracked.vstring(
@@ -515,9 +545,9 @@ process.ntuplePath = cms.Path(
 
 )
 
-#process.out = cms.OutputModule("PoolOutputModule",
-#                               fileName = cms.untracked.string('myTuple.root'),
-#                               SelectEvents   = cms.untracked.PSet( SelectEvents = cms.vstring('ntuplePath')),
-#                               outputCommands = cms.untracked.vstring('keep *')
-#                               )
-#process.outpath = cms.EndPath(process.out)
+process.out = cms.OutputModule("PoolOutputModule",
+                               fileName = cms.untracked.string('myTuple.root'),
+                               SelectEvents   = cms.untracked.PSet( SelectEvents = cms.vstring('ntuplePath')),
+                               outputCommands = cms.untracked.vstring('keep *')
+                               )
+process.outpath = cms.EndPath(process.out)

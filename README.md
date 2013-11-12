@@ -14,7 +14,7 @@ Instructions for Users
 ```
 (note: _patch6 is recommended in met recepie)
 
- * New Met recipes (including MVA MET), according to [met-recipe][3]:
+ * New Met recipes (including MVA MET), according to [met-recipe][9]:
 ```
   cp /uscms/home/chayanit/work/forZeynep/Type1MET.tgz .
   cp /uscms/home/chayanit/work/forZeynep/PatUtils.tgz .
@@ -166,3 +166,4 @@ If the new code significantly changes the format of the ntuples (substantial cha
 [6]: https://twiki.cern.ch/twiki/bin/viewauth/CMS/BoostedZToEEModIso
 [7]: https://twiki.cern.ch/twiki/bin/view/CMS/HEEPSelector
 [8]: https://twiki.cern.ch/twiki/bin/viewauth/CMS/SuperClusterFootprintRemoval
+[9]: https://twiki.cern.ch/twiki/bin/viewauth/CMS/SamplesForMETJINST

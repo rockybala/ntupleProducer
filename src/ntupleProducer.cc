@@ -6,15 +6,42 @@ ntupleProducer::ntupleProducer(const edm::ParameterSet& iConfig):
 {
   jetTag_           = iConfig.getUntrackedParameter<edm::InputTag>("JetTag");
   jecTag_           = iConfig.getParameter<std::string>("JecTag");
-  //metTag_           = iConfig.getUntrackedParameter<edm::InputTag>("METTag");
-  //trackmetTag_      = iConfig.getUntrackedParameter<edm::InputTag>("TrackMETTag");
-  //t0metTag_         = iConfig.getUntrackedParameter<edm::InputTag>("T0METTag");
-  //t2metTag_         = iConfig.getUntrackedParameter<edm::InputTag>("T2METTag");
   muonTag_          = iConfig.getUntrackedParameter<edm::InputTag>("MuonTag");
   electronTag_      = iConfig.getUntrackedParameter<edm::InputTag>("ElectronTag");
   photonTag_        = iConfig.getUntrackedParameter<edm::InputTag>("PhotonTag");
   genJetTag_        = iConfig.getUntrackedParameter<edm::InputTag>("GenJetTag");
   primaryVtxTag_    = iConfig.getUntrackedParameter<edm::InputTag>("PrimaryVtxTag");
+
+  //allMET:
+  mMetRaw           = iConfig.getParameter<edm::InputTag>("srcMetRaw");
+  mMetPf            = iConfig.getParameter<edm::InputTag>("srcMetPf");
+  mMetType01        = iConfig.getParameter<edm::InputTag>("srcMetCorrected");
+  mMetJERup         = iConfig.getParameter<edm::InputTag>("srcMetJERup");
+  mMetJERdown       = iConfig.getParameter<edm::InputTag>("srcMetJERdown");
+  mMetPhoup         = iConfig.getParameter<edm::InputTag>("srcMetPhoup");
+  mMetPhodown       = iConfig.getParameter<edm::InputTag>("srcMetPhodown");
+  mMetJetup         = iConfig.getParameter<edm::InputTag>("srcMetJetup");
+  mMetJetdown       = iConfig.getParameter<edm::InputTag>("srcMetJetdown");
+  mMetUncup         = iConfig.getParameter<edm::InputTag>("srcMetUncup");
+  mMetUncdown       = iConfig.getParameter<edm::InputTag>("srcMetUncdown");
+  mMetMVA           = iConfig.getParameter<edm::InputTag>("srcMVACorrected");
+  mMVAJERup         = iConfig.getParameter<edm::InputTag>("srcMVAJERup");
+  mMVAJERdown       = iConfig.getParameter<edm::InputTag>("srcMVAJERdown");
+  mMVAPhoup         = iConfig.getParameter<edm::InputTag>("srcMVAPhoup");
+  mMVAPhodown       = iConfig.getParameter<edm::InputTag>("srcMVAPhodown");
+  mMVAJetup         = iConfig.getParameter<edm::InputTag>("srcMVAJetup");
+  mMVAJetdown       = iConfig.getParameter<edm::InputTag>("srcMVAJetdown");
+  mMVAUncup         = iConfig.getParameter<edm::InputTag>("srcMVAUncup");
+  mMVAUncdown       = iConfig.getParameter<edm::InputTag>("srcMVAUncdown");
+
+  mPhoUp            = iConfig.getParameter<edm::InputTag>("srcPatPhoup");
+  mPhoDown          = iConfig.getParameter<edm::InputTag>("srcPatPhodown");
+  mPhoMVAUp         = iConfig.getParameter<edm::InputTag>("srcPatPhoMvaup");
+  mPhoMVADown       = iConfig.getParameter<edm::InputTag>("srcPatPhoMvadown");
+
+  mNoOverlapJet     = iConfig.getParameter<edm::InputTag>("srcPatJets");
+  mSelectedPatJet   = iConfig.getParameter<edm::InputTag>("srcSelectedJets");
+  mSmearedPatJet    = iConfig.getParameter<edm::InputTag>("srcSmearedJets");
 
   rhoCorrTag_       = iConfig.getUntrackedParameter<edm::InputTag>("rhoCorrTag");
   rho25CorrTag_     = iConfig.getUntrackedParameter<edm::InputTag>("rho25CorrTag");
@@ -33,6 +60,7 @@ ntupleProducer::ntupleProducer(const edm::ParameterSet& iConfig):
   savePhotons_      = iConfig.getUntrackedParameter<bool>("savePhotons");
   savePhoCrystals_  = iConfig.getUntrackedParameter<bool>("savePhoCrystals");
   saveMET_          = iConfig.getUntrackedParameter<bool>("saveMET");
+  saveMETExtra_     = iConfig.getUntrackedParameter<bool>("saveMETExtra");
 
   saveMoreEgammaVars_= iConfig.getUntrackedParameter<bool>("saveMoreEgammaVars");
 
@@ -168,6 +196,31 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     iEvent.getByLabel("combinedSecondaryVertexBJetTags", bTagCollectionCSVMVA);
     const reco::JetTagCollection & bTagsCSVMVA = *(bTagCollectionCSVMVA.product());
 
+    
+    if(saveMETExtra_ && !isRealData){
+      Handle<vector<pat::Jet> > patjets;
+      iEvent.getByLabel(mNoOverlapJet, patjets);
+      int jetCount_pat = 0;
+      for (vector<pat::Jet>::const_iterator ipJet = patjets->begin(); ipJet != patjets->end(); ++ipJet) {
+	TLorentzVector* jetCon_pat_d = new ((*jetCon_pat)[jetCount_pat]) TLorentzVector();
+	jetCon_pat_d->SetPxPyPzE(ipJet->px(), ipJet->py(), ipJet->pz(), ipJet->energy());
+	jetCount_pat++;
+      }
+
+      Handle<vector<pat::Jet> > smearedjets;
+      iEvent.getByLabel(mSmearedPatJet, smearedjets);
+      int jetCount_smear = 0;
+      for (vector<pat::Jet>::const_iterator ipJet = smearedjets->begin(); ipJet != smearedjets->end(); ++ipJet) {
+	TLorentzVector* jetCon_smear_d = new ((*jetCon_smear)[jetCount_smear]) TLorentzVector();
+        jetCon_smear_d->SetPxPyPzE(ipJet->px(), ipJet->py(), ipJet->pz(), ipJet->energy());
+	jetCount_smear++;
+      }
+
+
+    }
+
+    
+
     Handle<vector<reco::PFJet> > jets;
     iEvent.getByLabel(jetTag_, jets);
 
@@ -236,144 +289,115 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     }
   }
 
-  edm::Handle<edm::View<pat::MET> > met;
-  iEvent.getByLabel("patMETs", met);
-  std::cout << "met: " << (*met)[0].et()<< std::endl;
+  if(saveMET_){
 
-  edm::Handle<edm::View<pat::MET> > metraw;
-  iEvent.getByLabel("patPFMet", metraw);
-  std::cout << "raw: " << (*metraw)[0].et()<< std::endl;
+    edm::Handle<edm::View<pat::MET> > pfmet;
+    iEvent.getByLabel(mMetPf, pfmet);
+    if (pfmet->size() == 0) {    pfMET->SetMagPhi(-1,-10);    pfMET->SetSumEt(-1);    pfMET->SetSignificance(-1); }
+    else { pfMET->SetMagPhi((*pfmet)[0].et(), (*pfmet)[0].phi());   pfMET->SetSumEt((*pfmet)[0].sumEt());   pfMET->SetSignificance((*pfmet)[0].significance());}
+  
+    edm::Handle<edm::View<pat::MET> > metraw;
+    iEvent.getByLabel(mMetRaw, metraw);
+    if (metraw->size() == 0) {    rawMET->SetMagPhi(-1,-10);    rawMET->SetSumEt(-1);    rawMET->SetSignificance(-1); }
+    else { rawMET->SetMagPhi((*metraw)[0].et(), (*metraw)[0].phi());   rawMET->SetSumEt((*metraw)[0].sumEt());   rawMET->SetSignificance((*metraw)[0].significance());}
 
-  edm::Handle<edm::View<pat::MET> > pfmet;
-  iEvent.getByLabel("patMETsPF", pfmet);
-  std::cout << "pfmet: " << (*pfmet)[0].et() << std::endl;
+    edm::Handle<edm::View<pat::MET> > met01;
+    iEvent.getByLabel(mMetType01, met01);
+    if (met01->size() == 0) {    corrMET->SetMagPhi(-1,-10);    corrMET->SetSumEt(-1);    corrMET->SetSignificance(-1); }
+    else { corrMET->SetMagPhi((*met01)[0].et(), (*met01)[0].phi());   corrMET->SetSumEt((*met01)[0].sumEt());   corrMET->SetSignificance((*met01)[0].significance());}
 
-  edm::Handle<edm::View<pat::MET> > met01;
-  iEvent.getByLabel("patType1CorrectedPFMet", met01);
-  std::cout << "type1: " << (*met01)[0].et() << std::endl;
+    edm::Handle<edm::View<pat::MET> > metMVA;
+    iEvent.getByLabel(mMetMVA, metMVA);
+    if (metMVA->size() == 0) {    mvaMET->SetMagPhi(-1,-10);    mvaMET->SetSumEt(-1);    mvaMET->SetSignificance(-1); }
+    else { mvaMET->SetMagPhi((*metMVA)[0].et(), (*metMVA)[0].phi());   mvaMET->SetSumEt((*metMVA)[0].sumEt());   mvaMET->SetSignificance((*metMVA)[0].significance());}
 
-  edm::Handle<edm::View<pat::MET> > metMVA;
-  iEvent.getByLabel("patPFMetMVA", metMVA);
-  std::cout << "mva: " << (*metMVA)[0].et() <<std::endl;
-
-
-
-  /*
-  if (saveMET_) {
-
-    /////////////// 
-    // Get T0MET //
-    ///////////////
-
-
-    Handle<PFMETCollection> t0MET;
-    iEvent.getByLabel(t0metTag_, t0MET);
-    PFMETCollection::const_iterator t0met = t0MET->begin();
-
-    if (t0MET->begin() != t0MET->end()) {
-      T0MET->SetSumEt(t0met->sumEt());
-      T0MET->SetMagPhi(t0met->et(), t0met->phi());
-
-      // PF specififc methods
-      T0MET->SetMuonFraction(t0met->MuonEtFraction());
-      T0MET->SetNeutralHadronFraction(t0met->NeutralHadEtFraction());
-      T0MET->SetNeutralEMFraction(t0met->NeutralEMFraction());
-      T0MET->SetChargedHadronFraction(t0met->ChargedHadEtFraction());
-      T0MET->SetChargedEMFraction(t0met->ChargedEMEtFraction());
-
-      //Significance
-      float significance = (t0MET->front()).significance();
-      float sigmaX2 = (t0MET->front()).getSignificanceMatrix()(0,0);
-      T0MET->SetSignificance( significance );
-      T0MET->SetSigmaX2( sigmaX2 );
-
-    }
-    /////////////// 
-    // Get T2MET //
-    ///////////////
-
-
-    Handle<PFMETCollection> t2MET;
-    iEvent.getByLabel(t2metTag_, t2MET);
-    PFMETCollection::const_iterator t2met = t2MET->begin();
-
-    if (t2MET->begin() != t2MET->end()) {
-      T2MET->SetSumEt(t2met->sumEt());
-      T2MET->SetMagPhi(t2met->et(), t2met->phi());
-
-      // PF specififc methods
-      T2MET->SetMuonFraction(t2met->MuonEtFraction());
-      T2MET->SetNeutralHadronFraction(t2met->NeutralHadEtFraction());
-      T2MET->SetNeutralEMFraction(t2met->NeutralEMFraction());
-      T2MET->SetChargedHadronFraction(t2met->ChargedHadEtFraction());
-      T2MET->SetChargedEMFraction(t2met->ChargedEMEtFraction());
-
-    }
-
-    /////////////
-    // Get MET //
-    /////////////
-
-
-    Handle<PFMETCollection> MET;
-    iEvent.getByLabel(metTag_, MET);
-    PFMETCollection::const_iterator met = MET->begin();
-
-    if (MET->begin() != MET->end()) {
-      recoMET->SetSumEt(met->sumEt());
-      recoMET->SetMagPhi(met->et(), met->phi());
-
-      // PF specififc methods
-      recoMET->SetMuonFraction(met->MuonEtFraction());
-      recoMET->SetNeutralHadronFraction(met->NeutralHadEtFraction());
-      recoMET->SetNeutralEMFraction(met->NeutralEMFraction());
-      recoMET->SetChargedHadronFraction(met->ChargedHadEtFraction());
-      recoMET->SetChargedEMFraction(met->ChargedEMEtFraction());
-
-    }
-
-    edm::Handle< edm::View<reco::PFMET> > pfMEThandle;
-    iEvent.getByLabel("pfMet", pfMEThandle);
-    //Significance
-    float significance = (pfMEThandle->front()).significance();
-    float sigmaX2 = (pfMEThandle->front()).getSignificanceMatrix()(0,0);
-    recoMET->SetSignificance( significance );
-    recoMET->SetSigmaX2( sigmaX2 );
-
-    //////////////////
-    // Get TrackMET //  
-    //////////////////
-
-
-    Handle<METCollection> trkMET;
-    iEvent.getByLabel(trackmetTag_, trkMET);
-    METCollection::const_iterator trkmet = trkMET->begin();
-
-    if (trkMET->begin() != trkMET->end()) {
-      track_MET->SetSumEt(trkmet->sumEt());
-      track_MET->SetMagPhi(trkmet->et(), trkmet->phi());
-    }
-
-
-    //////////////////                                                                                                                                                          
-    // Get MVAMET   // 
-    ////////////////// 
-
-
-    Handle<vector<reco::PFMET> > mvaMET;
-    iEvent.getByLabel("pfMEtMVA", mvaMET);
-    vector<reco::PFMET>::const_iterator mvamet = mvaMET->begin();
-
-    if (mvaMET->begin() != mvaMET->end()) {
-      //std::cout << "sumET: " << mvamet->sumEt()<<std::endl;
-      //std::cout << "et: " << mvamet->et() << std::endl;
-      //std::cout << "phi: " << mvamet->phi() << std::endl;
-      mva_MET->SetSumEt(mvamet->sumEt());
-      mva_MET->SetMagPhi(mvamet->et(), mvamet->phi());
-    }
   }
 
-  */
+  if(saveMETExtra_){
+
+    if (!isRealData){
+      edm::Handle<pat::METCollection> metJERup;
+      iEvent.getByLabel(mMetJERup, metJERup);
+      if (metJERup->size() == 0) {    jerUpMET->SetMagPhi(-1,-10);    jerUpMET->SetSumEt(-1);    jerUpMET->SetSignificance(-1); }
+      else { jerUpMET->SetMagPhi((*metJERup)[0].et(), (*metJERup)[0].phi()); jerUpMET->SetSumEt((*metJERup)[0].sumEt()); jerUpMET->SetSignificance((*metJERup)[0].significance());}   
+      edm::Handle<pat::METCollection> metJERdown;
+      iEvent.getByLabel(mMetJERdown, metJERdown);
+      if (metJERdown->size() == 0) {    jerDownMET->SetMagPhi(-1,-10);    jerDownMET->SetSumEt(-1);    jerDownMET->SetSignificance(-1); }
+      else { jerDownMET->SetMagPhi((*metJERdown)[0].et(), (*metJERdown)[0].phi()); jerDownMET->SetSumEt((*metJERdown)[0].sumEt()); jerDownMET->SetSignificance((*metJERdown)[0].significance());}
+      
+      edm::Handle<pat::METCollection> metMVAJERup;
+      iEvent.getByLabel(mMVAJERup, metMVAJERup);
+      if (metMVAJERup->size() == 0) {    jerUpMVAMET->SetMagPhi(-1,-10);    jerUpMVAMET->SetSumEt(-1);    jerUpMVAMET->SetSignificance(-1); }
+      else { jerUpMVAMET->SetMagPhi((*metMVAJERup)[0].et(), (*metMVAJERup)[0].phi()); jerUpMVAMET->SetSumEt((*metMVAJERup)[0].sumEt()); jerUpMVAMET->SetSignificance((*metMVAJERup)[0].significance());}
+      
+      edm::Handle<pat::METCollection> metMVAJERdown;
+      iEvent.getByLabel(mMVAJERdown, metMVAJERdown);
+      if (metMVAJERdown->size() == 0) {    jerDownMVAMET->SetMagPhi(-1,-10);    jerDownMVAMET->SetSumEt(-1);    jerDownMVAMET->SetSignificance(-1); }
+      else { jerDownMVAMET->SetMagPhi((*metMVAJERdown)[0].et(), (*metMVAJERdown)[0].phi()); jerDownMVAMET->SetSumEt((*metMVAJERdown)[0].sumEt()); jerDownMVAMET->SetSignificance((*metMVAJERdown)[0].significance());}
+    }
+  
+    edm::Handle<pat::METCollection> metPhoup;
+    iEvent.getByLabel(mMetPhoup, metPhoup);
+    if (metPhoup->size() == 0) {    phoUpMET->SetMagPhi(-1,-10);    phoUpMET->SetSumEt(-1);    phoUpMET->SetSignificance(-1); }
+    else { phoUpMET->SetMagPhi((*metPhoup)[0].et(), (*metPhoup)[0].phi()); phoUpMET->SetSumEt((*metPhoup)[0].sumEt()); phoUpMET->SetSignificance((*metPhoup)[0].significance());}
+
+    edm::Handle<pat::METCollection> metPhodown;
+    iEvent.getByLabel(mMetPhodown, metPhodown);
+    if (metPhodown->size() == 0) {  phoDownMET->SetMagPhi(-1,-10);    phoDownMET->SetSumEt(-1);    phoDownMET->SetSignificance(-1); }
+    else { phoDownMET->SetMagPhi((*metPhodown)[0].et(), (*metPhodown)[0].phi()); phoDownMET->SetSumEt((*metPhodown)[0].sumEt()); phoDownMET->SetSignificance((*metPhodown)[0].significance());}
+    
+    edm::Handle<pat::METCollection> metMVAPhoup;
+    iEvent.getByLabel(mMVAPhoup, metMVAPhoup);
+    if (metMVAPhoup->size() == 0) {    phoUpMVAMET->SetMagPhi(-1,-10);    phoUpMVAMET->SetSumEt(-1);    phoUpMVAMET->SetSignificance(-1); }
+    else { phoUpMVAMET->SetMagPhi((*metMVAPhoup)[0].et(), (*metMVAPhoup)[0].phi()); phoUpMVAMET->SetSumEt((*metMVAPhoup)[0].sumEt()); phoUpMVAMET->SetSignificance((*metMVAPhoup)[0].significance());}
+
+    edm::Handle<pat::METCollection> metMVAPhodown;
+    iEvent.getByLabel(mMVAPhodown, metMVAPhodown);
+    if (metMVAPhodown->size() == 0) {    phoDownMVAMET->SetMagPhi(-1,-10);    phoDownMVAMET->SetSumEt(-1);    phoDownMVAMET->SetSignificance(-1); }
+    else { phoDownMVAMET->SetMagPhi((*metMVAPhodown)[0].et(), (*metMVAPhodown)[0].phi()); phoDownMVAMET->SetSumEt((*metMVAPhodown)[0].sumEt()); phoDownMVAMET->SetSignificance((*metMVAPhodown)[0].significance());}
+    
+    edm::Handle<pat::METCollection> metJetup;
+    iEvent.getByLabel(mMetJetup, metJetup);
+    if (metJetup->size() == 0) {    jetupMET->SetMagPhi(-1,-10);    jetupMET->SetSumEt(-1);    jetupMET->SetSignificance(-1); }
+    else { jetupMET->SetMagPhi((*metJetup)[0].et(), (*metJetup)[0].phi()); jetupMET->SetSumEt((*metJetup)[0].sumEt()); jetupMET->SetSignificance((*metJetup)[0].significance());}
+																
+    edm::Handle<pat::METCollection> metJetdown;
+    iEvent.getByLabel(mMetJetdown, metJetdown);
+    if (metJetdown->size() == 0) {    jetdownMET->SetMagPhi(-1,-10);    jetdownMET->SetSumEt(-1);    jetdownMET->SetSignificance(-1); }
+    else { jetdownMET->SetMagPhi((*metJetdown)[0].et(), (*metJetdown)[0].phi()); jetdownMET->SetSumEt((*metJetdown)[0].sumEt()); jetdownMET->SetSignificance((*metJetdown)[0].significance());}
+
+    edm::Handle<pat::METCollection> metMVAJetup;
+    iEvent.getByLabel(mMVAJetup, metMVAJetup);
+    if (metMVAJetup->size() == 0) {    jetupMVAMET->SetMagPhi(-1,-10);    jetupMVAMET->SetSumEt(-1);    jetupMVAMET->SetSignificance(-1); }
+    else { jetupMVAMET->SetMagPhi((*metMVAJetup)[0].et(), (*metMVAJetup)[0].phi()); jetupMVAMET->SetSumEt((*metMVAJetup)[0].sumEt()); jetupMVAMET->SetSignificance((*metMVAJetup)[0].significance());}
+
+    edm::Handle<pat::METCollection> metMVAJetdown;
+    iEvent.getByLabel(mMVAJetdown, metMVAJetdown);
+    if (metMVAJetdown->size() == 0) {    jetdownMVAMET->SetMagPhi(-1,-10);    jetdownMVAMET->SetSumEt(-1);    jetdownMVAMET->SetSignificance(-1); }
+    else { jetdownMVAMET->SetMagPhi((*metMVAJetdown)[0].et(), (*metMVAJetdown)[0].phi()); jetdownMVAMET->SetSumEt((*metMVAJetdown)[0].sumEt()); jetdownMVAMET->SetSignificance((*metMVAJetdown)[0].significance());}
+
+    edm::Handle<pat::METCollection> metUncup;
+    iEvent.getByLabel(mMetUncup, metUncup);
+    if (metUncup->size() == 0) {    uncUpMET->SetMagPhi(-1,-10);    uncUpMET->SetSumEt(-1);    uncUpMET->SetSignificance(-1); }
+    else { uncUpMET->SetMagPhi((*metUncup)[0].et(), (*metUncup)[0].phi()); uncUpMET->SetSumEt((*metUncup)[0].sumEt()); uncUpMET->SetSignificance((*metUncup)[0].significance());}
+
+    edm::Handle<pat::METCollection> metUncdown;
+    iEvent.getByLabel(mMetUncdown, metUncdown);
+    if (metUncdown->size() == 0) {    uncDownMET->SetMagPhi(-1,-10);    uncDownMET->SetSumEt(-1);    uncDownMET->SetSignificance(-1); }
+    else { uncDownMET->SetMagPhi((*metUncdown)[0].et(), (*metUncdown)[0].phi()); uncDownMET->SetSumEt((*metUncdown)[0].sumEt()); uncDownMET->SetSignificance((*metUncdown)[0].significance());}
+
+    edm::Handle<pat::METCollection> metMVAUncup;
+    iEvent.getByLabel(mMVAUncup, metMVAUncup);
+    if (metMVAUncup->size() == 0) {    uncUpMVAMET->SetMagPhi(-1,-10);    uncUpMVAMET->SetSumEt(-1);    uncUpMVAMET->SetSignificance(-1); }
+    else { uncUpMVAMET->SetMagPhi((*metMVAUncup)[0].et(), (*metMVAUncup)[0].phi()); uncUpMVAMET->SetSumEt((*metMVAUncup)[0].sumEt()); uncUpMVAMET->SetSignificance((*metMVAUncup)[0].significance());}
+
+    edm::Handle<pat::METCollection> metMVAUncdown;
+    iEvent.getByLabel(mMVAUncdown, metMVAUncdown);
+    if (metMVAUncdown->size() == 0) {    uncDownMVAMET->SetMagPhi(-1,-10);    uncDownMVAMET->SetSumEt(-1);    uncDownMVAMET->SetSignificance(-1); }
+    else { uncDownMVAMET->SetMagPhi((*metMVAUncdown)[0].et(), (*metMVAUncdown)[0].phi()); uncDownMVAMET->SetSumEt((*metMVAUncdown)[0].sumEt()); uncDownMVAMET->SetSignificance((*metMVAUncdown)[0].significance());}
+
+
+  }
 
 
   ///////////////
@@ -746,6 +770,50 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   // Get photons //
   /////////////////
   if (savePhotons_) {
+
+
+    if(saveMETExtra_){
+      edm::Handle<vector<pat::Photon> > patphoup;
+      iEvent.getByLabel(mPhoUp,patphoup);
+      
+      int patphotonCount_up = 0;
+      for (vector<pat::Photon>::const_iterator ipPhoton = patphoup->begin(); ipPhoton != patphoup->end() ; ++ipPhoton) {
+	
+	TLorentzVector* mypatPhoton_up = new ((*pho_up)[patphotonCount_up]) TLorentzVector();
+	mypatPhoton_up->SetPxPyPzE(ipPhoton->px(), ipPhoton->py(), ipPhoton->pz(), ipPhoton->p());	
+	++patphotonCount_up;
+      }
+      
+      edm::Handle<vector<pat::Photon> > patphodown;
+      iEvent.getByLabel(mPhoDown,patphodown);
+
+      int patphotonCount_down = 0;
+      for (vector<pat::Photon>::const_iterator ipPhoton = patphodown->begin(); ipPhoton != patphodown->end() ; ++ipPhoton) {
+        TLorentzVector* mypatPhoton_down = new ((*pho_down)[patphotonCount_down]) TLorentzVector();
+        mypatPhoton_down->SetPxPyPzE(ipPhoton->px(), ipPhoton->py(), ipPhoton->pz(), ipPhoton->p());
+        ++patphotonCount_down;
+      }
+
+      edm::Handle<vector<pat::Photon> >patphoMVAdown;
+      iEvent.getByLabel(mPhoMVADown,patphoMVAdown);
+
+      int patphotonCountMVA_down = 0;
+      for (vector<pat::Photon>::const_iterator ipPhoton = patphoMVAdown->begin(); ipPhoton != patphoMVAdown->end() ; ++ipPhoton) {
+        TLorentzVector* mypatPhotonMVA_down = new ((*pho_mva_down)[patphotonCountMVA_down]) TLorentzVector();
+        mypatPhotonMVA_down->SetPxPyPzE(ipPhoton->px(), ipPhoton->py(), ipPhoton->pz(), ipPhoton->p());
+        ++patphotonCountMVA_down;
+      }
+      edm::Handle<vector<pat::Photon> >patphoMVAup;
+      iEvent.getByLabel(mPhoMVAUp,patphoMVAup);
+
+      int patphotonCountMVA_up = 0;
+      for (vector<pat::Photon>::const_iterator ipPhoton = patphoMVAup->begin(); ipPhoton != patphoMVAup->end() ; ++ipPhoton) {
+        TLorentzVector* mypatPhotonMVA_up = new ((*pho_mva_up)[patphotonCountMVA_up]) TLorentzVector();
+        mypatPhotonMVA_up->SetPxPyPzE(ipPhoton->px(), ipPhoton->py(), ipPhoton->pz(), ipPhoton->p());
+        ++patphotonCountMVA_up;
+      }
+ 
+    }
 
     Handle<EcalRecHitCollection> Brechit;
     iEvent.getByLabel("reducedEcalRecHitsEB",Brechit);
@@ -1166,15 +1234,50 @@ void  ntupleProducer::beginJob()
   genJets        = new TClonesArray("TCGenJet");
   genParticles   = new TClonesArray("TCGenParticle");
   beamSpot       = new TVector3();
-  /*
-  recoMET.reset(  new TCMET);
-  track_MET.reset(new TCMET);
-  T0MET.reset(    new TCMET);
-  T2MET.reset(    new TCMET);
-  mva_MET.reset(  new TCMET);
-  */
+ 
+  pho_up         = new TClonesArray("TLorentzVector");
+  pho_down       = new TClonesArray("TLorentzVector");
+  pho_mva_up     = new TClonesArray("TLorentzVector");
+  pho_mva_down   = new TClonesArray("TLorentzVector");
+
+  jetCon_pat     = new TClonesArray("TLorentzVector");
+  jetCon_smear   = new TClonesArray("TLorentzVector");
+ 
+
+  pfMET.reset(  new TCMET);
+  rawMET.reset(  new TCMET);  
+  corrMET.reset(  new TCMET);  
+  mvaMET.reset(  new TCMET);  
+
+  jerUpMET.reset(  new TCMET);
+  jerDownMET.reset(  new TCMET);
+  jerUpMVAMET.reset(  new TCMET);
+  jerDownMVAMET.reset(  new TCMET);
+
+  phoUpMET.reset(  new TCMET);
+  phoDownMET.reset(  new TCMET);
+  phoUpMVAMET.reset(  new TCMET);
+  phoDownMVAMET.reset(  new TCMET);
+
+  jetupMET.reset(  new TCMET);
+  jetdownMET.reset(  new TCMET);
+  jetupMVAMET.reset(  new TCMET);
+  jetdownMVAMET.reset(  new TCMET);
+
+  uncUpMET.reset(  new TCMET);
+  uncDownMET.reset(  new TCMET); 
+  uncUpMVAMET.reset(  new TCMET); 
+  uncDownMVAMET.reset(  new TCMET); 
 
   h1_numOfEvents = fs->make<TH1F>("numOfEvents", "total number of events, unskimmed", 1,0,1);
+
+  eventTree->Branch("pho_up", &pho_up, 6400, 0);
+  eventTree->Branch("pho_down", &pho_down, 6400, 0);
+  eventTree->Branch("pho_mva_up", &pho_mva_up, 6400, 0);  
+  eventTree->Branch("pho_mva_down", &pho_mva_down, 6400, 0);
+
+  eventTree->Branch("jetCon_pat", &jetCon_pat, 6400,0);
+  eventTree->Branch("jetCon_smear", &jetCon_smear, 6400,0);
 
   eventTree->Branch("recoJets",     &recoJets,       6400, 0);
   //eventTree->Branch("recoJPT",      &recoJPT,        6400, 0);
@@ -1182,12 +1285,32 @@ void  ntupleProducer::beginJob()
   eventTree->Branch("recoMuons",    &recoMuons,      6400, 0);
   eventTree->Branch("recoPhotons",  &recoPhotons,    6400, 0);
 
-  /*  eventTree->Branch("recoMET",      recoMET.get(),   6400, 0);
-  eventTree->Branch("mva_MET",      mva_MET.get(),   6400, 0);
-  eventTree->Branch("track_MET",    track_MET.get(), 6400, 0);
-  eventTree->Branch("T0MET",        T0MET.get(),     6400, 0);
-  eventTree->Branch("T2MET",        T2MET.get(),     6400, 0);
-  */ eventTree->Branch("genJets",      &genJets,        6400, 0);
+  eventTree->Branch("pfMET",         pfMET.get(),     6400, 0);
+  eventTree->Branch("rawMET",        rawMET.get(),     6400, 0);
+  eventTree->Branch("corrMET",       corrMET.get(),     6400, 0);
+  eventTree->Branch("mvaMET",        mvaMET.get(),     6400, 0);
+
+  eventTree->Branch("jerUpMET", jerUpMET.get(),  6400, 0);
+  eventTree->Branch("jerDownMET", jerDownMET.get(),  6400, 0); 
+  eventTree->Branch("jerUpMVAMET", jerUpMVAMET.get(),  6400, 0); 
+  eventTree->Branch("jerDownMVAMET", jerDownMVAMET.get(),  6400, 0); 
+
+  eventTree->Branch("phoUpMET", phoUpMET.get(), 6400, 0);
+  eventTree->Branch("phoDownMET", phoDownMET.get(), 6400, 0);
+  eventTree->Branch("phoDownMVAMET", phoUpMVAMET.get(), 6400, 0);
+  eventTree->Branch("phoDownMVAMET", phoDownMVAMET.get(), 6400, 0);
+
+  eventTree->Branch("jetupMET", jetupMET.get(), 6400,0);
+  eventTree->Branch("jetdownMET", jetdownMET.get(), 6400,0); 
+  eventTree->Branch("jetupMVAMET", jetupMVAMET.get(), 6400,0); 
+  eventTree->Branch("jetdownMVAMET", jetdownMVAMET.get(), 6400,0); 
+
+  eventTree->Branch("uncUpMET",uncUpMET.get(),6400,0);
+  eventTree->Branch("uncDownMET",uncDownMET.get(),6400,0);
+  eventTree->Branch("uncUpMVAMET",uncUpMVAMET.get(),6400,0);
+  eventTree->Branch("uncDownMVAMET",uncDownMVAMET.get(),6400,0);
+
+  eventTree->Branch("genJets",      &genJets,        6400, 0);
   eventTree->Branch("genParticles", &genParticles,   6400, 0);
   eventTree->Branch("triggerObjects", &triggerObjects, 6400, 0);
 

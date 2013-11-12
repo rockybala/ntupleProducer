@@ -46,6 +46,16 @@
 #include "DataFormats/METReco/interface/METCollection.h"
 #include "DataFormats/METReco/interface/METFwd.h"
 
+// PAT candidates
+#include "DataFormats/PatCandidates/interface/Jet.h"
+#include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/Electron.h"
+#include "DataFormats/PatCandidates/interface/Photon.h"
+#include "DataFormats/PatCandidates/interface/MET.h"
+#include "DataFormats/PatCandidates/interface/MHT.h"
+#include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
+
+
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/MuonFwd.h"
 #include "DataFormats/MuonReco/interface/MuonSelectors.h"
@@ -241,10 +251,6 @@ class ntupleProducer : public edm::EDAnalyzer {
 
   edm::InputTag jetTag_;
   string        jecTag_;
-  edm::InputTag metTag_;
-  edm::InputTag trackmetTag_; 
-  edm::InputTag t0metTag_;
-  edm::InputTag t2metTag_;
   edm::InputTag genJetTag_;
   edm::InputTag muonTag_;
   edm::InputTag electronTag_;
@@ -266,6 +272,40 @@ class ntupleProducer : public edm::EDAnalyzer {
   edm::ParameterSet jetPUIdAlgo_;
   edm::InputTag triggerEventTag_;
 
+  //allMet
+
+  edm::InputTag mPhoUp;
+  edm::InputTag mPhoDown;
+  edm::InputTag mPhoMVAUp;
+  edm::InputTag mPhoMVADown;
+
+  edm::InputTag mNoOverlapJet;
+  edm::InputTag mSelectedPatJet;
+  edm::InputTag mSmearedPatJet;
+  
+  edm::InputTag mMetMVA;
+  edm::InputTag mMVAJERup;
+  edm::InputTag mMVAJERdown;
+  edm::InputTag mMVAPhoup;
+  edm::InputTag mMVAPhodown;
+  edm::InputTag mMVAJetup;
+  edm::InputTag mMVAJetdown;
+  edm::InputTag mMVAUncup;
+  edm::InputTag mMVAUncdown;
+
+  edm::InputTag mMetRaw;
+  edm::InputTag mMetPf;
+  edm::InputTag mMetType01;
+  edm::InputTag mMetJERup;
+  edm::InputTag mMetJERdown;
+  edm::InputTag mMetPhoup;
+  edm::InputTag mMetPhodown;
+  edm::InputTag mMetJetup;
+  edm::InputTag mMetJetdown;
+  edm::InputTag mMetUncup;
+  edm::InputTag mMetUncdown;
+
+
   bool skimLepton_;
   bool saveMuons_;
   bool saveJets_;
@@ -274,6 +314,7 @@ class ntupleProducer : public edm::EDAnalyzer {
   bool savePhotons_;
   bool savePhoCrystals_;
   bool saveMET_;
+  bool saveMETExtra_;
   bool saveGenJets_;
   bool saveGenParticles_;
   bool isRealData;
@@ -291,12 +332,36 @@ class ntupleProducer : public edm::EDAnalyzer {
   TClonesArray* triggerObjects;
   TClonesArray* genJets;
   TClonesArray* genParticles;
-  auto_ptr<TCMET>   recoMET;
-  auto_ptr<TCMET>   track_MET;
-  auto_ptr<TCMET>	T0MET; 
-  auto_ptr<TCMET>	T2MET;
-  auto_ptr<TCMET>   recoMET_corr;
-  auto_ptr<TCMET>   mva_MET;
+
+  TClonesArray* pho_up;
+  TClonesArray* pho_down;
+  TClonesArray* pho_mva_up;
+  TClonesArray* pho_mva_down;
+
+  auto_ptr<TCMET> pfMET;
+  auto_ptr<TCMET> rawMET;
+  auto_ptr<TCMET> corrMET;
+  auto_ptr<TCMET> mvaMET;
+
+  auto_ptr<TCMET> jerUpMET;
+  auto_ptr<TCMET> jerDownMET;
+  auto_ptr<TCMET> jerUpMVAMET;
+  auto_ptr<TCMET> jerDownMVAMET;
+
+  auto_ptr<TCMET> phoUpMET;
+  auto_ptr<TCMET> phoDownMET;
+  auto_ptr<TCMET> phoUpMVAMET;
+  auto_ptr<TCMET> phoDownMVAMET;
+
+  auto_ptr<TCMET> jetupMET;
+  auto_ptr<TCMET> jetdownMET;
+  auto_ptr<TCMET> jetupMVAMET;
+  auto_ptr<TCMET> jetdownMVAMET;
+
+  auto_ptr<TCMET> uncUpMET;
+  auto_ptr<TCMET> uncDownMET;
+  auto_ptr<TCMET> uncUpMVAMET;
+  auto_ptr<TCMET> uncDownMVAMET;
 
   //Vertex info
   TClonesArray* primaryVtx;
