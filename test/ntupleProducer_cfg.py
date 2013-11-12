@@ -7,8 +7,8 @@ process = cms.Process("NTUPLE")
 
 options = VarParsing.VarParsing ('analysis')
 options.maxEvents = 10
-#options.inputFiles = '/store/mc/Summer12_DR53X/DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball/AODSIM/PU_S10_START53_V7A-v1/0000/02CDCF05-BED2-E111-85F4-0030486740BA.root'
-options.inputFiles = '/store/data/Run2012D/SinglePhotonParked/AOD/22Jan2013-v1/30004/144D7268-4086-E211-9DC1-001E673984C1.root'
+options.inputFiles = '/store/mc/Summer12_DR53X/DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball/AODSIM/PU_S10_START53_V7A-v1/0000/02CDCF05-BED2-E111-85F4-0030486740BA.root'
+#options.inputFiles = '/store/data/Run2012D/SinglePhotonParked/AOD/22Jan2013-v1/30004/144D7268-4086-E211-9DC1-001E673984C1.root'
 
 options.register("isRealData",
                  0,
@@ -545,9 +545,9 @@ process.ntuplePath = cms.Path(
 
 )
 
-process.out = cms.OutputModule("PoolOutputModule",
-                               fileName = cms.untracked.string('myTuple.root'),
-                               SelectEvents   = cms.untracked.PSet( SelectEvents = cms.vstring('ntuplePath')),
-                               outputCommands = cms.untracked.vstring('keep *')
-                               )
-process.outpath = cms.EndPath(process.out)
+#process.out = cms.OutputModule("PoolOutputModule",
+#                               fileName = cms.untracked.string('myTuple.root'),
+#                               SelectEvents   = cms.untracked.PSet( SelectEvents = cms.vstring('ntuplePath')),
+#                               outputCommands = cms.untracked.vstring('keep *')
+#                               )
+#process.outpath = cms.EndPath(process.out)
