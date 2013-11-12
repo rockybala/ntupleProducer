@@ -177,8 +177,6 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 
       TCJet* jetCon (new ((*recoJets)[jetCount]) TCJet);
 
-      std::cout << " iJet->px(): " << iJet->px() << std::endl;
-
       jetCon->SetPxPyPzE(iJet->px(), iJet->py(), iJet->pz(), iJet->energy());
       jetCon->SetVtx(0., 0., 0.);
       jetCon->SetChHadFrac(iJet->chargedHadronEnergyFraction());
@@ -237,6 +235,10 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
       ++jetCount;
     }
   }
+
+  edm::Handle<edm::View<pat::MET> > met;
+  iEvent.getByLabel("patMETs", met);
+  std::cout << "met: " << (*met)[0].et()<< std::endl;
 
   edm::Handle<edm::View<pat::MET> > metraw;
   iEvent.getByLabel("patPFMet", metraw);

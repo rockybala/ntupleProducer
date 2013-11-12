@@ -14,19 +14,38 @@ Instructions for Users
 ```
 (note: _patch6 is recommended in met recepie)
 
- * Met recipes, according to [workbook][2] and [met-recipe][3]:
+ * New Met recipes (including MVA MET), according to [met-recipe][3]:
 ```
-  git cms-addpkg PhysicsTools/PatAlgos
-  git cms-merge-topic -u vadler:53X-tagset133511
-  git cms-addpkg PhysicsTools/PatUtils
-  git cms-merge-topic -u TaiSakuma:53X-met-130910-01
+  cp /uscms/home/chayanit/work/forZeynep/Type1MET.tgz .
+  cp /uscms/home/chayanit/work/forZeynep/PatUtils.tgz .
+  cp /uscms/home/chayanit/work/forZeynep/METPUSubtraction.tgz .
+
+  tar -xvf Type1MET.tgz
+  tar -xvf PatUtils.tgz
+  tar -xvf METPUSubtraction.tgz
+
+  cvs co -r V00-03-23 CommonTools/RecoAlgos 
+  cvs co -r b5_3_X_cvMEtCorr_2013Feb26 CommonTools/ParticleFlow
+  cvs co -r V05-00-18 DataFormats/JetReco
+  cvs co -r b5_3_X_cvMEtCorr_2013Feb22 DataFormats/METReco 
+  cvs co -r V06-05-06-10 DataFormats/PatCandidates
+  cvs co -r V00-02-15 DataFormats/StdDictionaries
+  #cvs co -r MM_53X_2013Jun17 JetMETCorrections/METPUSubtraction #not tagged yet
+  #cvs co -r V04-06-15 JetMETCorrections/Type1MET #not tagged yet
+  cvs co -r V08-09-57 PhysicsTools/PatAlgos
+  #cvs co -r b5_3_X_cvMEtCorr_2013Feb25 PhysicsTools/PatUtils #not tagged yet
+  cvs co -r V00-03-34 PhysicsTools/SelectorUtils
+  cvs co -r b5_3_X_cvMEtCorr_2013Feb25 RecoMET/METAlgorithms
+  cvs co -r b5_3_X_cvMEtCorr_2013Feb25 RecoJets/JetProducers 
+  cvs co -r V00-00-08 RecoMET/METAnalyzers 
+  cvs co -r V00-00-13-01 RecoMET/METFilters 
+  cvs co -r V03-03-12-02 RecoMET/METProducers
+  cvs co -r V01-04-25 RecoTauTag/RecoTau 
+  cvs co -r V01-04-13 RecoTauTag/Configuration
   scram b -j 9
 ```
- 
  * Met filters according to [MissingETOptionalFilters][4]:
 ```
-  cvs co -r V00-00-13-01 RecoMET/METFilters
-  cvs co -r V00-03-23 CommonTools/RecoAlgos
   cvs co -r V01-00-11-01 DPGAnalysis/Skims
   cvs co -r V00-11-17 DPGAnalysis/SiStripTools
   cvs co -r V00-00-08 DataFormats/TrackerCommon
@@ -42,39 +61,6 @@ Instructions for Users
   cat download.url | xargs wget
   cd ../../../
   scram b -j 9
-```
-
- * Track MET Code [need a ref]:
-```
-  cvs co -r V03-03-12-02 RecoMET/METProducers
-  cvs co -r 1.2 RecoMET/METProducers/src/ParticleFlowForChargedMETProducer.cc
-  cvs co -r 1.1 RecoMET/METProducers/src/TrackMETProducer.cc
-  cvs co -r 1.2 RecoMET/METProducers/interface/ParticleFlowForChargedMETProducer.h
-  cvs co -r 1.1 RecoMET/METProducers/interface/TrackMETProducer.h
-  cvs up -r 1.17 RecoMET/METProducers/src/SealModule.cc
-  cvs co -r 1.1 RecoMET/METProducers/python/TrackMET_cfi.py
-  cvs co -r 1.2 RecoMET/METProducers/python/pfChargedMET_cfi.py
-  scram b -j 9
-```
-
-
- * MVA MET Code [need a ref]:
-```
-  cvs co -r METPU_5_3_X_v12 JetMETCorrections/METPUSubtraction
-  cvs co -r HEAD -d pharrisTmp UserCode/pharris/MVAMet/data
-  cp  -d pharrisTmp/*June2013*.root           JetMETCorrections/METPUSubtraction/data/
-  cp  -d pharrisTmp/*Dec2012*.root           JetMETCorrections/METPUSubtraction/data/
-  rm -rf pharrisTmp
-  cvs co -r METPU_5_3_X_v4 RecoJets/JetProducers
-  cvs up -r HEAD RecoJets/JetProducers/data/
-  cvs up -r HEAD RecoJets/JetProducers/python/PileupJetIDCutParams_cfi.py                     
-  cvs up -r HEAD RecoJets/JetProducers/python/PileupJetIDParams_cfi.py                     
-  cvs up -r HEAD RecoJets/JetProducers/python/PileupJetID_cfi.py     
-  cvs co -r b5_3_X_cvMEtCorr_2013Feb22            DataFormats/METReco
-  cvs co -r V05-00-16                             DataFormats/JetReco
-  cvs co -r V01-04-25                             RecoTauTag/RecoTau 
-  cvs co -r V03-04-07                             RecoMET/METAlgorithms
-  cvs co -r V01-04-13                             RecoTauTag/Configuration
 ```
 
  * Extra code (for boosted Z->ee isolation), following [6] and [7]:
@@ -93,36 +79,12 @@ Instructions for Users
   mv SCFootprintRemoval PFIsolation/SuperClusterFootprintRemoval
 ```
 
- * Files that needs to be updated, or not??:
-```
-  cvs co -r V03-04-07 DataFormats/METReco/interface/CorrMETData.h
-  # These did not work (could not check out):
-  #cvs co -r HEAD JetMETCorrections/Type1MET/plugins/Type0PFMETcorrInputProducer.h
-  #cvs co -r HEAD JetMETCorrections/Type1MET/plugins/Type0PFMETcorrInputProducer.cc
-```
-
  * Now check out the ntuple producer code and then the specific tag/branch of the code that is known to work
 ```
  git clone https://github.com/NWUHEP/ntupleProducer NWU/ntupleProducer
  cd NWU/ntupleProducer
  git checkout master 
  cd ../..
-```
-
- * Patches to checked folders [should be in the release eventually?]:
-```
-  cp NWU/ntupleProducer/patches/PATMHTProducer.h PhysicsTools/PatAlgos/plugins/PATMHTProducer.h
-  cvs co -r V00-02-14 DataFormats/StdDictionaries
-  cp NWU/ntupleProducer/patches/classes.h DataFormats/StdDictionaries/src/classes.h
-  cp NWU/ntupleProducer/patches/classes_def.xml DataFormats/StdDictionaries/src/classes_def.xml
-
-  cp NWU/ntupleProducer/patches/pfMETCorrections_cff.py JetMETCorrections/Type1MET/python/pfMETCorrections_cff.py
-  cp NWU/ntupleProducer/patches/mvaPFMET_leptons_data_cff.py JetMETCorrections/METPUSubtraction/python/mvaPFMET_leptons_data_cff.py
-  cp NWU/ntupleProducer/patches/mvaPFMET_leptons_cff.py JetMETCorrections/METPUSubtraction/python/mvaPFMET_leptons_cff.py
-  cp NWU/ntupleProducer/patches/mvaPFMET_leptons_cfi.py JetMETCorrections/METPUSubtraction/python/mvaPFMET_leptons_cfi.py
-  cp NWU/ntupleProducer/patches/PFMETAlgorithmMVA.cc JetMETCorrections/METPUSubtraction/src/. 
-
-  scram b -j 9
 ```
 
 Once compiled, we are ready to run it
