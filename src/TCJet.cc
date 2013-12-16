@@ -89,6 +89,30 @@ float TCJet::DR2Mean() const {
   return _dR2Mean;
 }
 
+int TCJet::PuJetIdFlag_cut_loose() const{
+  return _id_cut_loose;
+}
+
+int TCJet::PuJetIdFlag_cut_medium() const{
+  return _id_cut_medium;
+}
+
+int TCJet::PuJetIdFlag_cut_tight() const{
+  return _id_cut_tight;
+}
+
+int TCJet::PuJetIdFlag_mva_loose() const{
+  return _id_mva_loose;
+}
+
+int TCJet::PuJetIdFlag_mva_medium() const{
+  return _id_mva_medium;
+}
+
+int TCJet::PuJetIdFlag_mva_tight() const{
+  return _id_mva_tight;
+}
+
 // "set" methods ---------------------------------------------
 
 
@@ -159,4 +183,28 @@ void TCJet::SetBetaStarClassic(float b) {
 }
 void TCJet::SetDR2Mean(float d) {
   _dR2Mean = d;
+}
+
+void TCJet::SetPuJetIdFlag_cut_loose(int i){
+  _id_cut_loose = i;
+}
+
+void TCJet::SetPuJetIdFlag_cut_medium(int i){
+  _id_cut_medium= i;
+}
+
+void TCJet::SetPuJetIdFlag_cut_tight(int i){
+  _id_cut_tight= i;
+}
+
+void TCJet::SetPuJetIdFlag_MVA_loose(int i){
+  _id_mva_loose= i;
+}
+
+void TCJet::SetPuJetIdFlag_MVA_medium(int i){
+  _id_mva_medium= i;
+}
+
+void TCJet::SetPuJetIdFlag_MVA_tight(int i){
+  _id_mva_tight= i;
 }

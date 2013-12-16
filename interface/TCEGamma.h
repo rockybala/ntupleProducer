@@ -1,5 +1,5 @@
 #ifndef _TCEGAMMA_H
-#define	_TCEGAMMA_H
+#define        _TCEGAMMA_H
 
 #include "TObject.h"
 #include "TLorentzVector.h"
@@ -17,14 +17,23 @@ class TCEGamma : public TCPhysObject {
     double time;
     double timeErr;
     int recoFlag;
+    CrystalInfo():
+      rawId(-999),
+      ieta(-999),
+      iphi(-999),
+      energy(-999),
+      time(-999),
+      timeErr(-999),
+      recoFlag(-999)
+    {}
   };
 
 
  private:
   
-  bool  _isEB;                  // true if particle is in ECAL Barrel
-  bool  _isEE;                  // true if particle is in ECAL Endcaps
-  bool  _isInGap;
+  bool _isEB; // true if particle is in ECAL Barrel
+  bool _isEE; // true if particle is in ECAL Endcaps
+  bool _isInGap;
   
   float _hadOverEm;
   float _r9;
@@ -35,16 +44,24 @@ class TCEGamma : public TCPhysObject {
   float _scDeltaPhi;
   float _scDeltaEta;
   float _scSigmaIetaIeta;
+  float _scSigmaIetaIphi;
   float _scSigmaIphiIphi;
   float _scEtaWidth;
   float _scPhiWidth;
 
+  float _scRawEnergy;
   float _scEnergy;
+  float _scPSEnergy;
   float _preShowerOverRaw;
 
+  float _e1x3;
   float _e1x5;
+  float _e2x2;
   float _e2x5;
+  float _e2x5Max;
   float _e5x5;
+
+  vector<float> _esEffSigmaRR;
   
 
   //float _mvaID;
@@ -58,24 +75,36 @@ class TCEGamma : public TCPhysObject {
   float _pfIsoNeutral;
   float _pfIsoPhoton;
 
-  //bool  _convVeto;
+  //bool _convVeto;
   
   // crystal stuff
   vector<TCEGamma::CrystalInfo> _crysVect;
-  int  _nCrystals; 
+  int _nCrystals;
+  
+  //mip stuff
+  float _mipchi2;
+  float _miptoten;
+  float _mipslope;
+  float _mipintercept;
+  float _mipnhitcone;
+  float _mipishalo;
 
+  float _roundness;
+  float _angle;
+  float _smin;
+  float _smaj;
   
  public:
   TCEGamma();
   virtual ~TCEGamma();
   
-   // "get" methods -----------
+  // "get" methods -----------
   vector<TCEGamma::CrystalInfo> GetCrystalVect() const;
 
-  int   GetNCrystals() const;
+  int GetNCrystals() const;
   float HadOverEm() const;
   
-  float R9() const; 
+  float R9() const;
 
   float SCEta() const;
   float SCPhi() const;
@@ -83,31 +112,55 @@ class TCEGamma : public TCPhysObject {
   float SCDeltaPhi() const;
 
   float SigmaIEtaIEta() const;
+  float SigmaIEtaIPhi() const;
   float SigmaIPhiIPhi() const;
 
   float SCEtaWidth() const;
   float SCPhiWidth() const;
 
+  float SCRawEnergy() const;
   float SCEnergy() const;
+  float SCPSEnergy() const;
   float PreShowerOverRaw() const;
+  float E1x3() const;
   float E1x5() const;
+  float E2x2() const;
   float E2x5() const;
+  float E2x5Max() const;
   float E5x5() const;
+
+  vector<float> ESEffSigmaRR() const;
 
   float PfIsoCharged() const;
   float PfIsoNeutral() const;
   float PfIsoPhoton() const;
-
-  //float MvaID() const; 
-  //float EnergyRegression() const; 
-  //float EnergyRegressionErr() const; 
   
-  //bool  ConversionVeto() const;
+  float E2OverE5() const;
+
+  //float MvaID() const;
+  //float EnergyRegression() const;
+  //float EnergyRegressionErr() const;
+  
+  //bool ConversionVeto() const;
   
   bool IsEB() const;
   bool IsEE() const;
   bool IsInGap() const;
+
+  //mip stuff
   
+  float MipChi2() const;
+  float MipTotEn() const;
+  float MipSlope() const;
+  float MipIntercept() const;
+  float MipNHitCone() const;
+  float MipIsHalo() const;
+
+  float Roundness() const;
+  float Angle() const;
+  float SMin() const;
+  float SMaj() const;
+
   //bool PassConversion(int lvl) const;
   
   //--------------------------
@@ -126,16 +179,24 @@ class TCEGamma : public TCPhysObject {
   void SetSCDeltaPhi(float);
 
   void SetSigmaIEtaIEta(float);
+  void SetSigmaIEtaIPhi(float);
   void SetSigmaIPhiIPhi(float);
 
   void SetSCEtaWidth(float);
   void SetSCPhiWidth(float);
 
+  void SetSCRawEnergy(float);
   void SetSCEnergy(float);
+  void SetSCPSEnergy(float);
   void SetPreShowerOverRaw(float);
+  void SetE1x3(float);
   void SetE1x5(float);
+  void SetE2x2(float);
   void SetE2x5(float);
+  void SetE2x5Max(float);
   void SetE5x5(float);
+
+  void SetESEffSigmaRR(float, float, float);
   
   
   //void SetConversionVeto(bool);
@@ -153,9 +214,22 @@ class TCEGamma : public TCPhysObject {
   void SetPfIsoNeutral(float);
   void SetPfIsoPhoton(float);
   
+
+  //mip stuff
+  void SetMipChi2(float);
+  void SetMipTotEn(float);
+  void SetMipSlope(float);
+  void SetMipIntercept(float);
+  void SetMipNHitCone(float);
+  void SetMipIsHalo(float);
+
+  void SetRoundness(float);
+  void SetAngle(float);
+  void SetSMin(float);
+  void SetSMaj(float);
+
   ClassDef(TCEGamma, 1);
 };
 
-#endif	/* _TCEGAMMA_H */
-
+#endif        /* _TCEGAMMA_H */
 

@@ -196,6 +196,31 @@ process.kt6PFJetsIso.Rho_EtaMax = cms.double(2.5)
 # for jet pileup ID variables
 from RecoJets.JetProducers.PileupJetIDParams_cfi import *
 
+process.load("RecoJets.JetProducers.PileupJetIDSequence_cff")
+from RecoJets.JetProducers.PileupJetIDSequence_cff import *
+
+## The final MVA has to be evaluated on corrected jets, thus the JEC have to be fed to the producer. The producer can run both on corrected and uncorrected jets, provided that the parameters are properly set. The snippet below shows how to run on a collection of uncorrected jets. To run on corrected reco jets, set the applyJec flag to False and the inputIsCorrected to True. 
+#
+process.recoPuJetId = puJetId.clone(
+    jets = cms.InputTag("ak5PFJets"),
+    #jets = cms.InputTag("ak5PFJetsL1FastL2L3"),
+    applyJec = cms.bool(True),
+    inputIsCorrected = cms.bool(False),
+       )
+
+process.recoPuJetMva = puJetMva.clone(
+       jets = cms.InputTag("ak5PFJets"),
+       #jets = cms.InputTag("ak5PFJetsL1FastL2L3"),
+       jetids = cms.InputTag("recoPuJetId"),
+       applyJec = cms.bool(True),
+       inputIsCorrected = cms.bool(False),
+       )
+
+
+
+recoPuJetIdSqeuence = cms.Sequence(process.recoPuJetId * process.recoPuJetMva )
+
+
 # global options
 process.load("FWCore.MessageLogger.MessageLogger_cfi")
 process.MessageLogger.cerr.threshold = 'INFO'
@@ -402,6 +427,7 @@ process.ntupleProducer   = cms.EDAnalyzer('ntupleProducer',
                                           photonIsoCalcTag  =    cms.PSet(isolationSumsCalculator),
                                           jetPUIdAlgo       =    cms.PSet(full_5x),
 
+                                                                                    
                                           #All MET
                                           srcPatPhoup         = cms.InputTag("shiftedGoodPhotonsHighPtCutEnUp"),
                                           srcPatPhodown       = cms.InputTag("shiftedGoodPhotonsHighPtCutEnDown"),
@@ -472,13 +498,20 @@ process.ntupleProducer   = cms.EDAnalyzer('ntupleProducer',
                                           savePhoCrystals   =    cms.untracked.bool(True),
                                           saveMoreEgammaVars=    cms.untracked.bool(True),
                                           saveMET           =    cms.untracked.bool(True),
-                                          saveMETExtra      =    cms.untracked.bool(True),                                        
+                                          saveMETExtra      =    cms.untracked.bool(False), 
                                           saveGenJets       =    cms.untracked.bool(True),
                                           saveGenParticles  =    cms.untracked.bool(True),
                                           
                                           #for SC footprint removal
                                           
                                           isolation_cone_size_forSCremoval = cms.untracked.double(0.3),
+
+                                          #for Ecal LazyTools and photon items
+                                          ebReducedRecHitCollection = cms.InputTag("reducedEcalRecHitsEB"),
+                                          eeReducedRecHitCollection = cms.InputTag("reducedEcalRecHitsEE"),
+                                          esReducedRecHitCollection = cms.InputTag("reducedEcalRecHitsES"),
+                                          
+                                          
 
   hltName           =    cms.untracked.string("HLT"),
   triggers          =    cms.untracked.vstring(
@@ -524,11 +557,12 @@ process.ntupleProducer   = cms.EDAnalyzer('ntupleProducer',
 process.ntuplePath = cms.Path(
     #MET STUFF with Syst
     process.patDefaultSequence    
+    #* process.puJetIdSqeuence
     * process.goodPhotonsHighPtCut
     * process.pfType1MEtUncertaintySequence
     * process.pfMVAMEtUncertaintySequence
     * AllFilters
-    
+    * recoPuJetIdSqeuence    
     * process.goodOfflinePrimaryVertices
     * process.pfNoPUSeq
     * process.kt6PFJetsIso

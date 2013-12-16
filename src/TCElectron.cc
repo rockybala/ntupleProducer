@@ -168,6 +168,11 @@ TLorentzVector TCElectron::RegressionMomCombP4() const {
 float TCElectron::EffArea() const {
   return _effArea;
 }
+
+vector<TCElectron::HitInfo> TCElectron::HitMap() const {
+  return _HitMap;
+}
+
 //------------------------------------------------
 // "set" methods ---------------------------------------------
 //------------------------------------------------------------------------
@@ -280,4 +285,9 @@ void TCElectron::SetRegressionMomCombP4(TLorentzVector tmpP4){
 void TCElectron::SetEffArea(float a){
   _effArea = a;
 }
+
+void TCElectron::SetHitMap( vector<TCElectron::HitInfo> HMap ){
+  _HitMap = HMap;
+}
+
 

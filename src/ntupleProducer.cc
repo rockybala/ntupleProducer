@@ -12,6 +12,11 @@ ntupleProducer::ntupleProducer(const edm::ParameterSet& iConfig):
   genJetTag_        = iConfig.getUntrackedParameter<edm::InputTag>("GenJetTag");
   primaryVtxTag_    = iConfig.getUntrackedParameter<edm::InputTag>("PrimaryVtxTag");
 
+
+  ebReducedRecHitCollection_ = iConfig.getParameter<edm::InputTag>("ebReducedRecHitCollection");
+  eeReducedRecHitCollection_ = iConfig.getParameter<edm::InputTag>("eeReducedRecHitCollection");
+  esReducedRecHitCollection_ = iConfig.getParameter<edm::InputTag>("esReducedRecHitCollection");
+
   //allMET:
   mMetRaw           = iConfig.getParameter<edm::InputTag>("srcMetRaw");
   mMetPf            = iConfig.getParameter<edm::InputTag>("srcMetPf");
@@ -127,7 +132,7 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   iEvent.getByLabel("pfNoPileUp",pfCandsEleIso);
   const  PFCandidateCollection thePfCollEleIso = *(pfCandsEleIso.product());
 
-
+  lazyTool.reset(new EcalClusterLazyTools(iEvent, iSetup, ebReducedRecHitCollection_, eeReducedRecHitCollection_));
 
   //////////////////////////
   //Get vertex information//
@@ -197,7 +202,7 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     const reco::JetTagCollection & bTagsCSVMVA = *(bTagCollectionCSVMVA.product());
 
     
-    if(saveMETExtra_ && !isRealData){
+    if(!isRealData){
       Handle<vector<pat::Jet> > patjets;
       iEvent.getByLabel(mNoOverlapJet, patjets);
       int jetCount_pat = 0;
@@ -219,16 +224,67 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 
     }
 
-    
+    //Have to have this because pu jet id requires to match to the ref_base only possible with View.
+    edm::Handle<edm::View<reco::PFJet> > jets_pu;
+    iEvent.getByLabel("ak5PFJets",jets_pu);
+
+    Handle<ValueMap<float> > puJetIdMVA;
+    iEvent.getByLabel(edm::InputTag("recoPuJetMva","fullDiscriminant"),puJetIdMVA);
+
+    Handle<ValueMap<int> > puJetIdFlagMVA;
+    iEvent.getByLabel(edm::InputTag("recoPuJetMva","fullId"),puJetIdFlagMVA);
+
+    Handle<ValueMap<float> > puJetIdCut;
+    iEvent.getByLabel(edm::InputTag("recoPuJetMva","cutbasedDiscriminant"),puJetIdCut);
+
+    Handle<ValueMap<int> > puJetIdFlagCut;
+    iEvent.getByLabel(edm::InputTag("recoPuJetMva","cutbasedId"),puJetIdFlagCut);
 
     Handle<vector<reco::PFJet> > jets;
     iEvent.getByLabel(jetTag_, jets);
 
+    int i_jet = -1;
     for (vector<reco::PFJet>::const_iterator iJet = jets->begin(); iJet != jets->end(); ++iJet) {
+      i_jet++;
 
       if (iJet->pt() < 10.) continue;
 
       TCJet* jetCon (new ((*recoJets)[jetCount]) TCJet);
+
+      //float mva   = (*puJetIdMVA)[jets_pu->refAt(i_jet)];
+      int  idflag = (*puJetIdFlagMVA)[jets_pu->refAt(i_jet)];
+
+      //cout << "idflag: " << idflag << " mva: " << mva << endl;
+      if( PileupJetIdentifier::passJetId( idflag, PileupJetIdentifier::kLoose )){
+	jetCon->SetPuJetIdFlag_MVA_loose(1); }
+      else jetCon->SetPuJetIdFlag_MVA_loose(0);
+      
+      if( PileupJetIdentifier::passJetId( idflag, PileupJetIdentifier::kMedium )) {
+	jetCon->SetPuJetIdFlag_MVA_medium(1); }
+      else jetCon->SetPuJetIdFlag_MVA_medium(0);
+
+      if( PileupJetIdentifier::passJetId( idflag, PileupJetIdentifier::kTight )) {
+	jetCon->SetPuJetIdFlag_MVA_tight(1); }
+      else jetCon->SetPuJetIdFlag_MVA_tight(0);
+
+      // Cut Based
+
+      //float mva_cut   = (*puJetIdCut)[jets_pu->refAt(i_jet)];
+      int  idflag_cut = (*puJetIdFlagCut)[jets_pu->refAt(i_jet)];
+
+      //cout << "idflag: " << idflag << " mva: " << mva << endl;                                    
+      if( PileupJetIdentifier::passJetId( idflag_cut, PileupJetIdentifier::kLoose )){
+        jetCon->SetPuJetIdFlag_cut_loose(1); }
+      else jetCon->SetPuJetIdFlag_cut_loose(0);
+      
+      if( PileupJetIdentifier::passJetId( idflag_cut, PileupJetIdentifier::kMedium )) {
+        jetCon->SetPuJetIdFlag_cut_medium(1); }
+      else jetCon->SetPuJetIdFlag_cut_medium(0);
+
+      if( PileupJetIdentifier::passJetId( idflag_cut, PileupJetIdentifier::kTight )) {
+        jetCon->SetPuJetIdFlag_cut_tight(1); }
+      else jetCon->SetPuJetIdFlag_cut_tight(0);
+
 
       jetCon->SetPxPyPzE(iJet->px(), iJet->py(), iJet->pz(), iJet->energy());
       jetCon->SetVtx(0., 0., 0.);
@@ -683,6 +739,25 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 
       eleCon->SetInverseEnergyMomentumDiff(fabs((1/iElectron->ecalEnergy()) - (1/iElectron->trackMomentumAtVtx().R())));
 
+      // HITINFO
+      std::vector<TCElectron::HitInfo> hitmap;
+      hitmap.clear();
+      for( int h = 0; h < iElectron->gsfTrack()->hitPattern().numberOfHits(); h++) {
+        uint32_t hit = iElectron->gsfTrack()->hitPattern().getHitPattern(h);
+	TCElectron::HitInfo hinfo;
+        hinfo.Layer = iElectron->gsfTrack()->hitPattern().getLayer(hit);
+        hinfo.ValidFilter = iElectron->gsfTrack()->hitPattern().validHitFilter(hit);
+        hinfo.PixelFilter = iElectron->gsfTrack()->hitPattern().pixelHitFilter(hit);
+        hinfo.BarrelPixelFilter = iElectron->gsfTrack()->hitPattern().pixelBarrelHitFilter(hit);
+	hinfo.MuonFilter = iElectron->gsfTrack()->hitPattern().muonHitFilter(hit);
+        hinfo.StripFilter = iElectron->gsfTrack()->hitPattern().stripHitFilter(hit);
+        hinfo.TrackerFilter = iElectron->gsfTrack()->hitPattern().trackerHitFilter(hit);
+
+        hitmap.push_back(hinfo);
+
+      } 
+      eleCon->SetHitMap( hitmap );
+      //end HITINFO        
 
       // Conversion information
       // See definition from here: https://twiki.cern.ch/twiki/bin/view/CMS/ConversionTools
@@ -741,6 +816,10 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 
         eleCon->SetIdMap("fabsEPDiff",fabs((1/iElectron->ecalEnergy()) - (1/iElectron->trackMomentumAtVtx().R())));
 
+
+	
+
+
         // Electron Iso variables
         eleCon->SetIsoMap("EmIso_R03",  iElectron->dr03EcalRecHitSumEt());
         eleCon->SetIsoMap("HadIso_R03", iElectron->dr03HcalTowerSumEt());
@@ -757,7 +836,8 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
         eleCon->SetIsoMap("EffArea_R03", AEff03);
         eleCon->SetIsoMap("EffArea_R04", AEff04);
         // Add electron MVA ID and ISO variables
-        electronMVA(&(*iElectron), eleCon, iEvent, iSetup, thePfCollEleIso, rhoFactor);
+        
+	electronMVA(&(*iElectron), eleCon, iEvent, iSetup, thePfCollEleIso, rhoFactor);
 
       }
 
@@ -815,6 +895,32 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
  
     }
 
+
+    //for mva id
+
+    // ES geometry
+    ESHandle<CaloGeometry> geoHandle;
+    iSetup.get<CaloGeometryRecord>().get(geoHandle);
+    const CaloSubdetectorGeometry *geometry = geoHandle->getSubdetectorGeometry(DetId::Ecal, EcalPreshower);
+    const CaloSubdetectorGeometry *& geometry_p = geometry;
+
+    if (geometry) topology_p.reset(new EcalPreshowerTopology(geoHandle));
+    
+    // make the map of rechits
+    Handle<EcalRecHitCollection> ESRecHits;
+    iEvent.getByLabel(esReducedRecHitCollection_,ESRecHits);
+    
+    rechits_map_.clear();
+    if (ESRecHits.isValid()) {
+      EcalRecHitCollection::const_iterator it;
+      for (it = ESRecHits->begin(); it != ESRecHits->end(); ++it) {
+        // remove bad ES rechits
+        if (it->recoFlag()==1 || it->recoFlag()==14 || (it->recoFlag()<=10 && it->recoFlag()>=5)) continue;
+        //Make the map of DetID, EcalRecHit pairs
+        rechits_map_.insert(std::make_pair(it->id(), *it));
+      }
+    }
+    
     Handle<EcalRecHitCollection> Brechit;
     iEvent.getByLabel("reducedEcalRecHitsEB",Brechit);
     //const EcalRecHitCollection* barrelRecHits= Brechit.product();
@@ -898,6 +1004,52 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
       myPhoton->SetPxPyPzE(iPhoton->px(), iPhoton->py(), iPhoton->pz(), iPhoton->p());
       myPhoton->SetVtx(iPhoton->vx(), iPhoton->vy(), iPhoton->vz());
 
+      myPhoton->SetMipChi2(iPhoton->mipChi2());
+      myPhoton->SetMipTotEn(iPhoton->mipTotEnergy());
+      myPhoton->SetMipSlope(iPhoton->mipSlope());
+      myPhoton->SetMipIntercept(iPhoton->mipIntercept());
+      myPhoton->SetMipNHitCone(iPhoton->mipNhitCone());
+      myPhoton->SetMipIsHalo(iPhoton->mipIsHalo());
+
+      /*
+      //Mip Variables:
+      cout << "mipChi2: "<< iPhoton->mipChi2() << endl;
+      cout << "mipTotEnergy: " << iPhoton->mipTotEnergy() << endl;
+      cout << "mipSlope: " << iPhoton->mipSlope() << endl;
+      cout << "mipIntercept: " << iPhoton->mipIntercept() <<endl;
+      cout << "mipNhitCone: " << iPhoton->mipNhitCone() << endl;
+      cout << "mipIsHalo: " << iPhoton->mipIsHalo() << endl;
+      */
+
+      // more cluster shapes from Lazy Tools
+
+      const EcalRecHitCollection* barrelRecHits= Brechit.product();      
+      if(iPhoton->isEB()){
+	vector<float> showershapes_barrel = EcalClusterTools::roundnessBarrelSuperClusters(*(iPhoton->superCluster()),*barrelRecHits,0);
+	
+	std::cout << "roundness: " << (float)showershapes_barrel[0] << std::endl;
+	std::cout << "angle: " << (float)showershapes_barrel[1] << std::endl;
+	
+	myPhoton->SetRoundness((float)showershapes_barrel[0]);
+	myPhoton->SetAngle((float)showershapes_barrel[1]);
+      }
+      else{myPhoton->SetRoundness(-99.); myPhoton->SetAngle(-99.);}
+      
+      
+      vector<float> phoCov;
+      const reco::CaloClusterPtr phoSeed = iPhoton->superCluster()->seed();
+      phoCov = lazyTool->localCovariances(*phoSeed);
+
+      std::pair<DetId, float> maxRH = EcalClusterTools::getMaximum( *phoSeed, &(*barrelRecHits) );
+      if(maxRH.second) {
+	Cluster2ndMoments moments = EcalClusterTools::cluster2ndMoments(*phoSeed, *barrelRecHits);
+	cout << "smaj: " << moments.sMaj << std::endl;
+	cout << "smin: " << moments.sMin << std::endl;
+	myPhoton->SetSMin(moments.sMin);
+	myPhoton->SetSMaj(moments.sMaj);
+      }
+      else {myPhoton->SetSMin(-99); myPhoton->SetSMaj(-99);}
+
       // ID variables
       //Methods that are availabel for the electrons can be found here:
       //http://cmslxr.fnal.gov/lxr/source/DataFormats/EgammaCandidates/interface/Photon.h?v=CMSSW_5_3_11
@@ -908,7 +1060,8 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
       myPhoton->SetSCEta(iPhoton->superCluster()->eta());
       myPhoton->SetSCPhi(iPhoton->superCluster()->phi());
       myPhoton->SetSigmaIEtaIEta(iPhoton->sigmaIetaIeta());
-      //myPhoton->SetSigmaIPhiIPhi(); there is no sigma iphi iphi in the photon. strange
+      myPhoton->SetSigmaIEtaIPhi(phoCov[1]);
+      myPhoton->SetSigmaIPhiIPhi(phoCov[2]); 
 
       myPhoton->SetSCEtaWidth(  iPhoton->superCluster()->etaWidth());
       myPhoton->SetSCPhiWidth(  iPhoton->superCluster()->phiWidth());
@@ -918,10 +1071,15 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
       //eleCon->SetSCDeltaPhi( );
 
       myPhoton->SetSCEnergy(iPhoton->superCluster()->energy());
+      myPhoton->SetSCRawEnergy(iPhoton->superCluster()->rawEnergy());
+      myPhoton->SetSCPSEnergy(iPhoton->superCluster()->preshowerEnergy());
 
       if (iPhoton->superCluster()->rawEnergy()!=0)
-        myPhoton->SetPreShowerOverRaw(iPhoton->superCluster()->preshowerEnergy() / iPhoton->superCluster()->rawEnergy());
+	myPhoton->SetPreShowerOverRaw(iPhoton->superCluster()->preshowerEnergy() / iPhoton->superCluster()->rawEnergy());
 
+      myPhoton->SetE1x3(lazyTool->e3x1(*phoSeed));
+      myPhoton->SetE2x2(lazyTool->e2x2(*phoSeed));
+      myPhoton->SetE2x5Max(lazyTool->e2x5Max(*phoSeed));
 
       myPhoton->SetE1x5(iPhoton->e1x5());
       myPhoton->SetE2x5(iPhoton->e2x5());
@@ -988,6 +1146,23 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
       //Conversion info
       bool passElectronVeto = !(ConversionTools::hasMatchedPromptElectron(iPhoton->superCluster(), hElectrons, hConversions, vertexBeamSpot.position()));
       myPhoton->SetConversionVeto(passElectronVeto);
+
+      //Effective energy shit
+      float phoESEffSigmaRR_x = 0.;
+      float phoESEffSigmaRR_y = 0.;
+      float phoESEffSigmaRR_z = 0.;
+      
+      if (ESRecHits.isValid() && (fabs(iPhoton->superCluster()->eta()) > 1.6 && fabs(iPhoton->superCluster()->eta()) < 3)) {
+
+        vector<float> phoESHits0 = getESHits((*iPhoton).superCluster()->x(), (*iPhoton).superCluster()->y(), (*iPhoton).superCluster()->z(), rechits_map_, geometry_p, topology_p.get(), 0);
+
+        vector<float> phoESShape = getESEffSigmaRR(phoESHits0);
+        phoESEffSigmaRR_x = phoESShape[0];
+        phoESEffSigmaRR_y = phoESShape[1];
+        phoESEffSigmaRR_z = phoESShape[2];
+      }
+      myPhoton->SetESEffSigmaRR(phoESEffSigmaRR_x, phoESEffSigmaRR_y, phoESEffSigmaRR_z);
+
 
       ++photonCount;
     }
@@ -1235,46 +1410,53 @@ void  ntupleProducer::beginJob()
   genParticles   = new TClonesArray("TCGenParticle");
   beamSpot       = new TVector3();
  
-  pho_up         = new TClonesArray("TLorentzVector");
-  pho_down       = new TClonesArray("TLorentzVector");
-  pho_mva_up     = new TClonesArray("TLorentzVector");
-  pho_mva_down   = new TClonesArray("TLorentzVector");
+  if(saveMETExtra_){
+    pho_up         = new TClonesArray("TLorentzVector");
+    pho_down       = new TClonesArray("TLorentzVector");
+    pho_mva_up     = new TClonesArray("TLorentzVector");
+    pho_mva_down   = new TClonesArray("TLorentzVector");
+  }
 
   jetCon_pat     = new TClonesArray("TLorentzVector");
   jetCon_smear   = new TClonesArray("TLorentzVector");
  
-
   pfMET.reset(  new TCMET);
   rawMET.reset(  new TCMET);  
   corrMET.reset(  new TCMET);  
   mvaMET.reset(  new TCMET);  
 
-  jerUpMET.reset(  new TCMET);
-  jerDownMET.reset(  new TCMET);
-  jerUpMVAMET.reset(  new TCMET);
-  jerDownMVAMET.reset(  new TCMET);
+  if(saveMETExtra_){
 
-  phoUpMET.reset(  new TCMET);
-  phoDownMET.reset(  new TCMET);
-  phoUpMVAMET.reset(  new TCMET);
-  phoDownMVAMET.reset(  new TCMET);
+    jerUpMET.reset(  new TCMET);
+    jerDownMET.reset(  new TCMET);
+    jerUpMVAMET.reset(  new TCMET);
+    jerDownMVAMET.reset(  new TCMET);
+    
+    phoUpMET.reset(  new TCMET);
+    phoDownMET.reset(  new TCMET);
+    phoUpMVAMET.reset(  new TCMET);
+    phoDownMVAMET.reset(  new TCMET);
+    
+    jetupMET.reset(  new TCMET);
+    jetdownMET.reset(  new TCMET);
+    jetupMVAMET.reset(  new TCMET);
+    jetdownMVAMET.reset(  new TCMET);
 
-  jetupMET.reset(  new TCMET);
-  jetdownMET.reset(  new TCMET);
-  jetupMVAMET.reset(  new TCMET);
-  jetdownMVAMET.reset(  new TCMET);
-
-  uncUpMET.reset(  new TCMET);
-  uncDownMET.reset(  new TCMET); 
-  uncUpMVAMET.reset(  new TCMET); 
-  uncDownMVAMET.reset(  new TCMET); 
+    uncUpMET.reset(  new TCMET);
+    uncDownMET.reset(  new TCMET); 
+    uncUpMVAMET.reset(  new TCMET); 
+    uncDownMVAMET.reset(  new TCMET); 
+  }
 
   h1_numOfEvents = fs->make<TH1F>("numOfEvents", "total number of events, unskimmed", 1,0,1);
+
+  if(saveMETExtra_){
 
   eventTree->Branch("pho_up", &pho_up, 6400, 0);
   eventTree->Branch("pho_down", &pho_down, 6400, 0);
   eventTree->Branch("pho_mva_up", &pho_mva_up, 6400, 0);  
   eventTree->Branch("pho_mva_down", &pho_mva_down, 6400, 0);
+  }
 
   eventTree->Branch("jetCon_pat", &jetCon_pat, 6400,0);
   eventTree->Branch("jetCon_smear", &jetCon_smear, 6400,0);
@@ -1290,25 +1472,27 @@ void  ntupleProducer::beginJob()
   eventTree->Branch("corrMET",       corrMET.get(),     6400, 0);
   eventTree->Branch("mvaMET",        mvaMET.get(),     6400, 0);
 
-  eventTree->Branch("jerUpMET", jerUpMET.get(),  6400, 0);
-  eventTree->Branch("jerDownMET", jerDownMET.get(),  6400, 0); 
-  eventTree->Branch("jerUpMVAMET", jerUpMVAMET.get(),  6400, 0); 
-  eventTree->Branch("jerDownMVAMET", jerDownMVAMET.get(),  6400, 0); 
-
-  eventTree->Branch("phoUpMET", phoUpMET.get(), 6400, 0);
-  eventTree->Branch("phoDownMET", phoDownMET.get(), 6400, 0);
-  eventTree->Branch("phoDownMVAMET", phoUpMVAMET.get(), 6400, 0);
-  eventTree->Branch("phoDownMVAMET", phoDownMVAMET.get(), 6400, 0);
-
-  eventTree->Branch("jetupMET", jetupMET.get(), 6400,0);
-  eventTree->Branch("jetdownMET", jetdownMET.get(), 6400,0); 
-  eventTree->Branch("jetupMVAMET", jetupMVAMET.get(), 6400,0); 
-  eventTree->Branch("jetdownMVAMET", jetdownMVAMET.get(), 6400,0); 
-
-  eventTree->Branch("uncUpMET",uncUpMET.get(),6400,0);
-  eventTree->Branch("uncDownMET",uncDownMET.get(),6400,0);
-  eventTree->Branch("uncUpMVAMET",uncUpMVAMET.get(),6400,0);
-  eventTree->Branch("uncDownMVAMET",uncDownMVAMET.get(),6400,0);
+  if(saveMETExtra_){
+    eventTree->Branch("jerUpMET", jerUpMET.get(),  6400, 0);
+    eventTree->Branch("jerDownMET", jerDownMET.get(),  6400, 0); 
+    eventTree->Branch("jerUpMVAMET", jerUpMVAMET.get(),  6400, 0); 
+    eventTree->Branch("jerDownMVAMET", jerDownMVAMET.get(),  6400, 0); 
+    
+    eventTree->Branch("phoUpMET", phoUpMET.get(), 6400, 0);
+    eventTree->Branch("phoDownMET", phoDownMET.get(), 6400, 0);
+    eventTree->Branch("phoDownMVAMET", phoUpMVAMET.get(), 6400, 0);
+    eventTree->Branch("phoDownMVAMET", phoDownMVAMET.get(), 6400, 0);
+    
+    eventTree->Branch("jetupMET", jetupMET.get(), 6400,0);
+    eventTree->Branch("jetdownMET", jetdownMET.get(), 6400,0); 
+    eventTree->Branch("jetupMVAMET", jetupMVAMET.get(), 6400,0); 
+    eventTree->Branch("jetdownMVAMET", jetdownMVAMET.get(), 6400,0); 
+    
+    eventTree->Branch("uncUpMET",uncUpMET.get(),6400,0);
+    eventTree->Branch("uncDownMET",uncDownMET.get(),6400,0);
+    eventTree->Branch("uncUpMVAMET",uncUpMVAMET.get(),6400,0);
+    eventTree->Branch("uncDownMVAMET",uncDownMVAMET.get(),6400,0);
+  }
 
   eventTree->Branch("genJets",      &genJets,        6400, 0);
   eventTree->Branch("genParticles", &genParticles,   6400, 0);
@@ -2108,6 +2292,224 @@ TCGenParticle* ntupleProducer::addGenParticle(const reco::GenParticle* myParticl
 
   return genCon;
 }
+
+vector<float> ntupleProducer::getESHits(double X, double Y, double Z, map<DetId, EcalRecHit> rechits_map, const CaloSubdetectorGeometry*& geometry_p, CaloSubdetectorTopology *topology_p, int row) {
+
+  //cout<<row<<endl;
+
+  vector<float> esHits;
+
+  //double X = bcPtr->x();
+  //double Y = bcPtr->y();
+  //double Z = bcPtr->z();
+  const GlobalPoint point(X,Y,Z);
+
+  DetId esId1 = (dynamic_cast<const EcalPreshowerGeometry*>(geometry_p))->getClosestCellInPlane(point, 1);
+  DetId esId2 = (dynamic_cast<const EcalPreshowerGeometry*>(geometry_p))->getClosestCellInPlane(point, 2);
+  ESDetId esDetId1 = (esId1 == DetId(0)) ? ESDetId(0) : ESDetId(esId1);
+  ESDetId esDetId2 = (esId2 == DetId(0)) ? ESDetId(0) : ESDetId(esId2);
+
+  map<DetId, EcalRecHit>::iterator it;
+  ESDetId next;
+  ESDetId strip1;
+  ESDetId strip2;
+
+  strip1 = esDetId1;
+  strip2 = esDetId2;
+
+  EcalPreshowerNavigator theESNav1(strip1, topology_p);
+  theESNav1.setHome(strip1);
+
+  EcalPreshowerNavigator theESNav2(strip2, topology_p);
+  theESNav2.setHome(strip2);
+
+  if (row == 1) {
+    if (strip1 != ESDetId(0)) strip1 = theESNav1.north();
+    if (strip2 != ESDetId(0)) strip2 = theESNav2.east();
+  } else if (row == -1) {
+    if (strip1 != ESDetId(0)) strip1 = theESNav1.south();
+    if (strip2 != ESDetId(0)) strip2 = theESNav2.west();
+  }
+
+  // Plane 2
+  if (strip1 == ESDetId(0)) {
+    for (unsigned int i=0; i<31; ++i) esHits.push_back(0);
+  } else {
+
+    it = rechits_map.find(strip1);
+    if (it->second.energy() > 1.0e-10 && it != rechits_map.end()) esHits.push_back(it->second.energy());
+    else esHits.push_back(0);
+    //cout<<"center : "<<strip1<<" "<<it->second.energy()<<endl;
+
+    // east road
+    for (unsigned int i=0; i<15; ++i) {
+      next = theESNav1.east();
+      if (next != ESDetId(0)) {
+        it = rechits_map.find(next);
+        if (it->second.energy() > 1.0e-10 && it != rechits_map.end()) esHits.push_back(it->second.energy());
+        else esHits.push_back(0);
+        //cout<<"east "<<i<<" : "<<next<<" "<<it->second.energy()<<endl;
+      } else {
+        for (unsigned int j=i; j<15; ++j) esHits.push_back(0);
+        break;
+        //cout<<"east "<<i<<" : "<<next<<" "<<0<<endl;
+      }
+    }
+
+    // west road
+    theESNav1.setHome(strip1);
+    theESNav1.home();
+    for (unsigned int i=0; i<15; ++i) {
+      next = theESNav1.west();
+      if (next != ESDetId(0)) {
+        it = rechits_map.find(next);
+        if (it->second.energy() > 1.0e-10 && it != rechits_map.end()) esHits.push_back(it->second.energy());
+        else esHits.push_back(0);
+        //cout<<"west "<<i<<" : "<<next<<" "<<it->second.energy()<<endl;
+      } else {
+        for (unsigned int j=i; j<15; ++j) esHits.push_back(0);
+        break;
+        //cout<<"west "<<i<<" : "<<next<<" "<<0<<endl;
+      }
+    }
+  }
+
+  if (strip2 == ESDetId(0)) {
+    for (unsigned int i=0; i<31; ++i) esHits.push_back(0);
+  } else {
+
+    it = rechits_map.find(strip2);
+    if (it->second.energy() > 1.0e-10 && it != rechits_map.end()) esHits.push_back(it->second.energy());
+    else esHits.push_back(0);
+    //cout<<"center : "<<strip2<<" "<<it->second.energy()<<endl;
+
+    // north road
+    for (unsigned int i=0; i<15; ++i) {
+      next = theESNav2.north();
+      if (next != ESDetId(0)) {
+        it = rechits_map.find(next);
+        if (it->second.energy() > 1.0e-10 && it != rechits_map.end()) esHits.push_back(it->second.energy());
+        else esHits.push_back(0);
+        //cout<<"north "<<i<<" : "<<next<<" "<<it->second.energy()<<endl;
+      } else {
+        for (unsigned int j=i; j<15; ++j) esHits.push_back(0);
+        break;
+        //cout<<"north "<<i<<" : "<<next<<" "<<0<<endl;
+      }
+    }
+
+    // south road
+    theESNav2.setHome(strip2);
+    theESNav2.home();
+    for (unsigned int i=0; i<15; ++i) {
+      next = theESNav2.south();
+      if (next != ESDetId(0)) {
+        it = rechits_map.find(next);
+        if (it->second.energy() > 1.0e-10 && it != rechits_map.end()) esHits.push_back(it->second.energy());
+        else esHits.push_back(0);
+        //cout<<"south "<<i<<" : "<<next<<" "<<it->second.energy()<<endl;
+      } else {
+        for (unsigned int j=i; j<15; ++j) esHits.push_back(0);
+        break;
+        //cout<<"south "<<i<<" : "<<next<<" "<<0<<endl;
+      }
+    }
+  }
+
+  return esHits;
+}
+
+vector<float> ntupleProducer::getESEffSigmaRR(vector<float> ESHits0)
+{
+  const int nBIN = 21;
+  vector<float> esShape;
+
+  TH1F *htmpF = new TH1F("htmpF","",nBIN,0,nBIN);
+  TH1F *htmpR = new TH1F("htmpR","",nBIN,0,nBIN);
+  htmpF->Reset(); htmpR->Reset();
+
+  Float_t effsigmaRR=0.;
+
+  for(int ibin=0; ibin<((nBIN+1)/2); ++ibin) {
+    if (ibin==0) {
+      htmpF->SetBinContent((nBIN+1)/2,ESHits0[ibin]);
+      htmpR->SetBinContent((nBIN+1)/2,ESHits0[ibin+31]);
+    } else { // hits sourd the seed
+      htmpF->SetBinContent((nBIN+1)/2+ibin,ESHits0[ibin]);
+      htmpF->SetBinContent((nBIN+1)/2-ibin,ESHits0[ibin+15]);
+      htmpR->SetBinContent((nBIN+1)/2+ibin,ESHits0[ibin+31]);
+      htmpR->SetBinContent((nBIN+1)/2-ibin,ESHits0[ibin+31+15]);
+    }
+  }
+
+  // ---- Effective Energy Deposit Width ---- //
+  double EffWidthSigmaXX = 0.;
+  double EffWidthSigmaYY = 0.;
+  double totalEnergyXX = 0.;
+  double totalEnergyYY = 0.;
+  double EffStatsXX = 0.;
+  double EffStatsYY = 0.;
+  for (int id_X=1; id_X<=21; ++id_X) {
+    totalEnergyXX += htmpF->GetBinContent(id_X);
+    EffStatsXX += htmpF->GetBinContent(id_X)*(id_X-11)*(id_X-11);
+    totalEnergyYY += htmpR->GetBinContent(id_X);
+    EffStatsYY += htmpR->GetBinContent(id_X)*(id_X-11)*(id_X-11);
+  }
+  // If denominator == 0, effsigmaRR = 0;
+  EffWidthSigmaXX = (totalEnergyXX>0.) ? sqrt(fabs(EffStatsXX / totalEnergyXX)) : 0.;
+  EffWidthSigmaYY = (totalEnergyYY>0.) ? sqrt(fabs(EffStatsYY / totalEnergyYY)) : 0.;
+  effsigmaRR = ((totalEnergyXX + totalEnergyYY) >0.) ? sqrt(EffWidthSigmaXX * EffWidthSigmaXX + EffWidthSigmaYY * EffWidthSigmaYY) : 0.;
+  esShape.push_back(effsigmaRR);
+  esShape.push_back(EffWidthSigmaXX);
+  esShape.push_back(EffWidthSigmaYY);
+
+  delete htmpF;
+  delete htmpR;
+
+  return esShape;
+}
+
+/*
+
+TCTrack::ConversionInfo ntupleProducer::CheckForConversions(const edm::Handle<reco::ConversionCollection> &convCol,
+                                                            const reco::GsfTrackRef &gsf,
+                                                            const math::XYZPoint &bs, const math::XYZPoint &pv)
+{
+  TCTrack::ConversionInfo * convInfo = new TCTrack::ConversionInfo();
+  //int iconv=-1;
+  for (reco::ConversionCollection::const_iterator conv = convCol->begin(); conv!= convCol->end(); ++conv) {
+    //iconv++;
+    
+    reco::Vertex vtx = conv->conversionVertex();
+    if (vtx.isValid()) {
+      if (ConversionTools::matchesConversion(gsf, *conv)) {
+        
+        (*convInfo).isValid = true;
+        
+        (*convInfo).vtxProb = TMath::Prob( vtx.chi2(), vtx.ndof() );
+	math::XYZVector mom(conv->refittedPairMomentum());
+        double dbsx = vtx.x() - bs.x();
+        double dbsy = vtx.y() - bs.y();
+        (*convInfo).lxyBS = (mom.x()*dbsx + mom.y()*dbsy)/mom.rho();
+        
+        double dpvx = vtx.x() - pv.x();
+        double dpvy = vtx.y() - pv.y();
+        (*convInfo).lxyPV = (mom.x()*dpvx + mom.y()*dpvy)/mom.rho();
+        
+        (*convInfo).nHitsMax=0;
+        for (std::vector<uint8_t>::const_iterator it = conv->nHitsBeforeVtx().begin(); it!=conv->nHitsBeforeVtx().end(); ++it) {
+          if ((*it)>(*convInfo).nHitsMax) (*convInfo).nHitsMax = (*it);
+        }
+        
+        break;
+      }
+    }
+  }
+  return (*convInfo);
+}
+
+*/
+
 
 
 //define this as a plug-in

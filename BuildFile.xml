@@ -36,6 +36,7 @@
 <use   name="JetMETCorrections/Algorithms"/>
 <use   name="RecoMET/METAlgorithms"/>
 <use   name="RecoJets/JetProducers"/>
-<use name="PFIsolation/SuperClusterFootprintRemoval"/>
+<use   name="PFIsolation/SuperClusterFootprintRemoval"/>
+<use   name="RecoEcal/EgammaCoreTools"/>
 <flags   EDM_PLUGIN="1"/>
 #<Flags CXXFLAGS="-g"/>

@@ -4,8 +4,22 @@
 #include "TObject.h"
 #include "TLorentzVector.h"
 #include "TCEGamma.h"
+//#include "TCTrack.h"
 
 class TCElectron : public TCEGamma {
+
+  //Hit Info                                                                                          
+ public:
+  struct HitInfo{
+    int Layer;
+    bool ValidFilter;
+    bool PixelFilter;
+    bool BarrelPixelFilter;
+    bool MuonFilter;
+    bool StripFilter;
+    bool TrackerFilter;
+  };
+  //                                                                                                 
  private:
   
   float _normChi2gsf;
@@ -49,6 +63,7 @@ class TCElectron : public TCEGamma {
   
   TLorentzVector _regressionMomCombP4;
   float _effArea;
+  vector<TCElectron::HitInfo> _HitMap;
 
  public:
   TCElectron();
@@ -95,7 +110,7 @@ class TCElectron : public TCEGamma {
   bool PassIsolation(int lvl) const;
   
   TLorentzVector RegressionMomCombP4() const;
-
+  vector<TCElectron::HitInfo> HitMap() const;
   float EffArea() const;
 
   //--------------------------
@@ -136,8 +151,8 @@ class TCElectron : public TCEGamma {
   void SetCutLevel(int cut, int lvl);
   
   void SetRegressionMomCombP4(TLorentzVector tmpP4);
-  
   void SetEffArea(float);
+  void SetHitMap( vector <TCElectron::HitInfo> HMap );
 
   ClassDef(TCElectron, 1);
 };
