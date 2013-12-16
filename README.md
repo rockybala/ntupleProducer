@@ -81,7 +81,7 @@ Instructions for Users
 
  * Now check out the ntuple producer code and then the specific tag/branch of the code that is known to work
 ```
- git clone https://github.com/NWUHEP/ntupleProducer NWU/ntupleProducer
+ git clone https://github.com/zdemirag/ntupleProducer.git  NWU/ntupleProducer
  cd NWU/ntupleProducer
  git checkout master 
  cd ../..
