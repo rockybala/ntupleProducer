@@ -42,7 +42,6 @@ Instructions for Users
   cvs co -r V03-03-12-02 RecoMET/METProducers
   cvs co -r V01-04-25 RecoTauTag/RecoTau 
   cvs co -r V01-04-13 RecoTauTag/Configuration
-  scram b -j 9
 ```
  * Met filters according to [MissingETOptionalFilters][4]:
 ```
@@ -50,7 +49,6 @@ Instructions for Users
   cvs co -r V00-11-17 DPGAnalysis/SiStripTools
   cvs co -r V00-00-08 DataFormats/TrackerCommon
   cvs co -r V01-09-05 RecoLocalTracker/SubCollectionProducers
-  scram b -j 9
 ```
 
  * Egamma tools from [5]:
@@ -60,7 +58,6 @@ Instructions for Users
   cd EgammaAnalysis/ElectronTools/data
   cat download.url | xargs wget
   cd ../../../
-  scram b -j 9
 ```
 
  * Extra code (for boosted Z->ee isolation), following [6] and [7]:
@@ -85,6 +82,17 @@ Instructions for Users
  cd NWU/ntupleProducer
  git checkout master 
  cd ../..
+```
+
+ * Patched to checked folders
+```
+ cp NWU/ntupleProducer/patches/PATMHTProducer.h PhysicsTools/PatAlgos/plugins/PATMHTProducer.h 
+ cvs co -r V00-02-14 DataFormats/StdDictionaries
+ cp NWU/ntupleProducer/patches/classes.h DataFormats/StdDictionaries/src/classes.h
+ cp NWU/ntupleProducer/patches/classes_def.xml DataFormats/StdDictionaries/src/classes_def.xml
+ cp NWU/ntupleProducer/patches/PileupJet* RecoJets/JetProducers/python/
+ cp NWU/ntupleProducer/patches/PFMETAlgorithmMVA.cc JetMETCorrections/METPUSubtraction/src/. 
+ scram b -j 12
 ```
 
 Once compiled, we are ready to run it

@@ -1027,8 +1027,8 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
       if(iPhoton->isEB()){
 	vector<float> showershapes_barrel = EcalClusterTools::roundnessBarrelSuperClusters(*(iPhoton->superCluster()),*barrelRecHits,0);
 	
-	std::cout << "roundness: " << (float)showershapes_barrel[0] << std::endl;
-	std::cout << "angle: " << (float)showershapes_barrel[1] << std::endl;
+	//std::cout << "roundness: " << (float)showershapes_barrel[0] << std::endl;
+	//std::cout << "angle: " << (float)showershapes_barrel[1] << std::endl;
 	
 	myPhoton->SetRoundness((float)showershapes_barrel[0]);
 	myPhoton->SetAngle((float)showershapes_barrel[1]);
@@ -1043,8 +1043,8 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
       std::pair<DetId, float> maxRH = EcalClusterTools::getMaximum( *phoSeed, &(*barrelRecHits) );
       if(maxRH.second) {
 	Cluster2ndMoments moments = EcalClusterTools::cluster2ndMoments(*phoSeed, *barrelRecHits);
-	cout << "smaj: " << moments.sMaj << std::endl;
-	cout << "smin: " << moments.sMin << std::endl;
+	//cout << "smaj: " << moments.sMaj << std::endl;
+	//cout << "smin: " << moments.sMin << std::endl;
 	myPhoton->SetSMin(moments.sMin);
 	myPhoton->SetSMaj(moments.sMaj);
       }
