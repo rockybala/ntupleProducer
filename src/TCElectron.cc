@@ -14,9 +14,9 @@ TCElectron::TCElectron() {
   _ip3dSig = -99;
   _deltaEtaSeedCluster = -99;
   _deltaPhiSeedCluster = -99;
-  _mvaID  = -99;
-  _regEne = -99;
-  _regErr = -99;
+  // _mvaID  = -99;
+  //_regEne = -99;
+  //_regErr = -99;
   _passConvVeto = false;
   _convMissHits = 0;
   
@@ -37,6 +37,9 @@ TCElectron::~TCElectron() {
 
 
 // "get" methods -------------------------------------
+
+TVector3 TCElectron::TrackPosition() const {return _pos;}
+
 float TCElectron::NormalizedChi2() const { 
   return _normChi2gsf; 
 }
@@ -52,15 +55,15 @@ float TCElectron::InverseEnergyMomentumDiff() const{
 }
 
 
-float TCElectron::MvaID() const { 
-  return _mvaID; 
-} 
-float TCElectron::EnergyRegression() const { 
-  return _regEne; 
-}
-float TCElectron::EnergyRegressionErr() const { 
-  return _regErr; 
-} 
+//float TCElectron::MvaID() const { 
+//  return _mvaID; 
+//} 
+//float TCElectron::EnergyRegression() const { 
+//  return _regEne; 
+//}
+//float TCElectron::EnergyRegressionErr() const { 
+//  return _regErr; 
+//} 
 
 float TCElectron::IP3d() const {
   return _ip3d;
@@ -125,6 +128,7 @@ float TCElectron::FBrem() const {
     return _fBrem;
 }
 
+/*
 int TCElectron::CutLevel(int lvl) const{
   if(lvl==95){
     return _cut95;
@@ -142,28 +146,28 @@ int TCElectron::CutLevel(int lvl) const{
     return -99;
   }
 }
+*/
+//bool TCElectron::PassID(int lvl) const { 
+//  unsigned c = CutLevel(lvl);
+//  if (c & 0x01) return true;
+//  else return false;
+//}   
 
-bool TCElectron::PassID(int lvl) const { 
-  unsigned c = CutLevel(lvl);
-  if (c & 0x01) return true;
-  else return false;
-}   
+//bool TCElectron::PassIsolation(int lvl) const {
+//  unsigned c = CutLevel(lvl);
+//  if (c & 0x02) return true;
+//  else return false;
+//}
 
-bool TCElectron::PassIsolation(int lvl) const {
-  unsigned c = CutLevel(lvl);
-  if (c & 0x02) return true;
-  else return false;
-}
+//bool TCElectron::PassConversion(int lvl) const {
+//  unsigned c = CutLevel(lvl);
+//  if (c & 0x04) return true;
+//  else return false;
+//}
 
-bool TCElectron::PassConversion(int lvl) const {
-  unsigned c = CutLevel(lvl);
-  if (c & 0x04) return true;
-  else return false;
-}
-
-TLorentzVector TCElectron::RegressionMomCombP4() const {
-  return _regressionMomCombP4;
-}
+//TLorentzVector TCElectron::RegressionMomCombP4() const {
+//  return _regressionMomCombP4;
+//}
 
 float TCElectron::EffArea() const {
   return _effArea;
@@ -177,6 +181,11 @@ vector<TCElectron::HitInfo> TCElectron::HitMap() const {
 // "set" methods ---------------------------------------------
 //------------------------------------------------------------------------
 
+void TCElectron::SetTrackPosition(float x, float y, float z){
+  TVector3 pos(x,y,z);
+  _pos = pos;
+}
+
 void TCElectron::SetNormalizedChi2Gsf(float c){ 
   _normChi2gsf = c; 
 } 
@@ -188,15 +197,15 @@ void TCElectron::SetInverseEnergyMomentumDiff(float d){
   _inverseEnergyMomentumDiff = d;
 }
 
-void TCElectron::SetMvaID(float m){ 
-  _mvaID = m; 
-}
-void TCElectron::SetEnergyRegression(float e){ 
-  _regEne = e; 
-}
-void TCElectron::SetEnergyRegressionErr(float e){ 
-  _regErr = e; 
-} 
+//void TCElectron::SetMvaID(float m){ 
+//  _mvaID = m; 
+//}
+//void TCElectron::SetEnergyRegression(float e){ 
+//  _regEne = e; 
+//}
+//void TCElectron::SetEnergyRegressionErr(float e){ 
+//  _regErr = e; 
+//} 
 
 void TCElectron::SetIP3d(float d){
   _ip3d = d;
@@ -262,6 +271,7 @@ void TCElectron::SetConversionMissHits(short m) {
 }
 
 
+/*
 void TCElectron::SetCutLevel(int cut, int lvl){
   if(lvl==95){
     _cut95 = cut;
@@ -277,10 +287,10 @@ void TCElectron::SetCutLevel(int cut, int lvl){
     _cut60 = cut;
   }
 }
-
-void TCElectron::SetRegressionMomCombP4(TLorentzVector tmpP4){
-  _regressionMomCombP4 = tmpP4;
-}
+*/
+//void TCElectron::SetRegressionMomCombP4(TLorentzVector tmpP4){
+//  _regressionMomCombP4 = tmpP4;
+//}
 
 void TCElectron::SetEffArea(float a){
   _effArea = a;

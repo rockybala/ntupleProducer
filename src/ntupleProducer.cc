@@ -446,6 +446,7 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     Handle<reco::GsfElectronCollection > electrons;
     iEvent.getByLabel(electronTag_, electrons);
 
+    /*
     Handle<reco::GsfElectronCollection > calibratedElectrons;
     iEvent.getByLabel(edm::InputTag("calibratedElectrons","calibratedGsfElectrons"), calibratedElectrons);
 
@@ -460,6 +461,7 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
     edm::Handle<edm::ValueMap<double>> regErr_handle;
     iEvent.getByLabel(edm::InputTag("eleRegressionEnergy","eneErrorRegForGsfEle"), regErr_handle);
     const edm::ValueMap<double> ele_regErr = (*regErr_handle.product());
+    */
 
     //This stuff is for modified isolation for close electrons,
     //following prescription here: https://twiki.cern.ch/twiki/bin/viewauth/CMS/BoostedZToEEModIso
@@ -490,7 +492,6 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
       eleCon->SetIsEB(iElectron->isEB());
       eleCon->SetIsEE(iElectron->isEE());
       eleCon->SetIsInGap(iElectron->isGap());
-
 
       // Electron ID variables
 
@@ -543,6 +544,10 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
       eleCon->SetPtError(iElectron->gsfTrack()->ptError());
 
       eleCon->SetNormalizedChi2Gsf(iElectron->gsfTrack()->normalizedChi2());
+
+      //cout << "iElectron->trackPositionAtCalo(): " << iElectron->trackPositionAtCalo().x() << endl;
+      
+      eleCon->SetTrackPosition(iElectron->trackPositionAtCalo().x(),iElectron->trackPositionAtCalo().y(),iElectron->trackPositionAtCalo().z());
 
       bool validKF= false;
       reco::TrackRef myTrackRef = iElectron->closestCtfTrackRef();
@@ -647,7 +652,7 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
       eleCon->SetIsoMap("EffArea_R04", AEff04);
       eleCon->SetEffArea(AEff04);
 
-
+      /*
       //MVA output:
       float m = ele_mvaTrigV0.get(eee-1);
       eleCon->SetMvaID(m);
@@ -669,7 +674,7 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
       tmpP4.SetPtEtaPhiE(iElectronTmp.pt(), iElectronTmp.eta(), iElectronTmp.phi(), iElectronTmp.energy());
       eleCon->SetRegressionMomCombP4(tmpP4);
 
-
+      */
       eleIsolator.fGetIsolation(&(*iElectron), &thePfColl, myVtxRef, primaryVtcs);
       eleCon->SetPfIsoCharged(eleIsolator.getIsolationCharged());
       eleCon->SetPfIsoNeutral(eleIsolator.getIsolationNeutral());
@@ -707,7 +712,7 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
         eleCon->SetIsoMap("EffArea_R04", AEff04);
         // Add electron MVA ID and ISO variables
         
-	electronMVA(&(*iElectron), eleCon, iEvent, iSetup, thePfCollEleIso, rhoFactor);
+	//electronMVA(&(*iElectron), eleCon, iEvent, iSetup, thePfCollEleIso, rhoFactor);
 
       }
 
@@ -1032,7 +1037,6 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
         phoESEffSigmaRR_z = phoESShape[2];
       }
       myPhoton->SetESEffSigmaRR(phoESEffSigmaRR_x, phoESEffSigmaRR_y, phoESEffSigmaRR_z);
-
 
       ++photonCount;
     }

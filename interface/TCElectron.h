@@ -5,6 +5,7 @@
 #include "TLorentzVector.h"
 #include "TCEGamma.h"
 //#include "TCTrack.h"
+#include "TVector3.h"
 
 class TCElectron : public TCEGamma {
 
@@ -21,7 +22,8 @@ class TCElectron : public TCEGamma {
   };
   //                                                                                                 
  private:
-  
+
+  TVector3 _pos;
   float _normChi2gsf;
   float _normChi2kf;
 
@@ -39,9 +41,9 @@ class TCElectron : public TCEGamma {
   float _deltaEtaSeedCluster;
   float _deltaPhiSeedCluster;
 
-  float _mvaID;
-  float _regEne;
-  float _regErr;
+  //  float _mvaID;
+  //  float _regEne;
+  //  float _regErr;
   
   bool  _passConvVeto;
   short _convMissHits;
@@ -53,15 +55,15 @@ class TCElectron : public TCEGamma {
   int _numberOfLostPixelHits;
   int _numberOfLostTrackerHits;
 
-  
+  /*  
   int _cut95;
   int _cut90;
   int _cut85;
   int _cut80;
   int _cut70;
   int _cut60;
-  
-  TLorentzVector _regressionMomCombP4;
+  */
+  //  TLorentzVector _regressionMomCombP4;
   float _effArea;
   vector<TCElectron::HitInfo> _HitMap;
 
@@ -89,9 +91,9 @@ class TCElectron : public TCEGamma {
   
   float FBrem() const;
   
-  float MvaID() const; 
-  float EnergyRegression() const; 
-  float EnergyRegressionErr() const; 
+  //  float MvaID() const; 
+  //  float EnergyRegression() const; 
+  //  float EnergyRegressionErr() const; 
   
   bool  PassConversionVeto() const;
   short ConversionMissHits() const;
@@ -104,18 +106,20 @@ class TCElectron : public TCEGamma {
   int NumberOfLostPixelHits() const;
   int NumberOfLostTrackerHits() const;
   
-  int  CutLevel(int lvl) const;
-  bool PassID(int lvl) const;
-  bool PassConversion(int lvl) const;
-  bool PassIsolation(int lvl) const;
+  //int  CutLevel(int lvl) const;
+  //bool PassID(int lvl) const;
+  //bool PassConversion(int lvl) const;
+  //bool PassIsolation(int lvl) const;
   
-  TLorentzVector RegressionMomCombP4() const;
+  //TLorentzVector RegressionMomCombP4() const;
   vector<TCElectron::HitInfo> HitMap() const;
   float EffArea() const;
+  TVector3 TrackPosition() const;
 
   //--------------------------
   // "set" methods ---------
   //--------------------------
+  void SetTrackPosition(float x, float y, float z);
   void SetNormalizedChi2Gsf(float);
   void SetNormalizedChi2Kf(float);
   
@@ -144,13 +148,13 @@ class TCElectron : public TCEGamma {
   void SetNumberOfLostTrackerHits(int);
   
   
-  void SetMvaID(float);
-  void SetEnergyRegression(float);
-  void SetEnergyRegressionErr(float);
+  //  void SetMvaID(float);
+  //  void SetEnergyRegression(float);
+  //  void SetEnergyRegressionErr(float);
   
-  void SetCutLevel(int cut, int lvl);
+  //void SetCutLevel(int cut, int lvl);
   
-  void SetRegressionMomCombP4(TLorentzVector tmpP4);
+  // void SetRegressionMomCombP4(TLorentzVector tmpP4);
   void SetEffArea(float);
   void SetHitMap( vector <TCElectron::HitInfo> HMap );
 

@@ -6,7 +6,7 @@ from RecoEgamma.PhotonIdentification.isolationCalculator_cfi import *
 process = cms.Process("NTUPLE")
 
 options = VarParsing.VarParsing ('analysis')
-options.maxEvents = 10
+options.maxEvents = 1000
 options.inputFiles = '/store/mc/Summer12_DR53X/DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball/AODSIM/PU_S10_START53_V7A-v1/0000/02CDCF05-BED2-E111-85F4-0030486740BA.root'
 #options.inputFiles = '/store/data/Run2012D/SinglePhotonParked/AOD/22Jan2013-v1/30004/144D7268-4086-E211-9DC1-001E673984C1.root'
 
@@ -224,7 +224,7 @@ process.load("RecoJets.JetProducers.PileupJetIDSequence_cff")
 # global options
 process.load("FWCore.MessageLogger.MessageLogger_cfi")
 process.MessageLogger.cerr.threshold = 'INFO'
-process.MessageLogger.cerr.FwkReport.reportEvery = 100
+process.MessageLogger.cerr.FwkReport.reportEvery = 500
 
 '''
 process.MessageLogger.categories = cms.untracked.vstring('FwkJob', 'FwkReport', 'FwkSummary', 'Root_NoDictionary', 'DataNotAvailable', 'HLTConfigData')
@@ -325,39 +325,39 @@ AllFilters = cms.Sequence(process.HBHENoiseFilterResultProducer
 
 
 # Electron MVA ID producer:
-process.load('EgammaAnalysis/ElectronTools/electronIdMVAProducer_cfi')
+#process.load('EgammaAnalysis/ElectronTools/electronIdMVAProducer_cfi')
 
 # Electron Regression (post moriond recommendation)
-process.load('EgammaAnalysis/ElectronTools/electronRegressionEnergyProducer_cfi')
-process.eleRegressionEnergy.inputElectronsTag    = cms.InputTag('gsfElectrons')
-process.eleRegressionEnergy.inputCollectionType  = cms.uint32(0)
-process.eleRegressionEnergy.useRecHitCollections = cms.bool(True)
-process.eleRegressionEnergy.produceValueMaps     = cms.bool(True)
-process.eleRegressionEnergy.energyRegressionType = cms.uint32(2)
-process.eleRegressionEnergy.regressionInputFile = cms.string("EgammaAnalysis/ElectronTools/data/eleEnergyRegWeights_WithSubClusters_VApr15.root")
+#process.load('EgammaAnalysis/ElectronTools/electronRegressionEnergyProducer_cfi')
+#process.eleRegressionEnergy.inputElectronsTag    = cms.InputTag('gsfElectrons')
+#process.eleRegressionEnergy.inputCollectionType  = cms.uint32(0)
+#process.eleRegressionEnergy.useRecHitCollections = cms.bool(True)
+#process.eleRegressionEnergy.produceValueMaps     = cms.bool(True)
+#process.eleRegressionEnergy.energyRegressionType = cms.uint32(2)
+#process.eleRegressionEnergy.regressionInputFile = cms.string("EgammaAnalysis/ElectronTools/data/eleEnergyRegWeights_WithSubClusters_VApr15.root")
 
 # Electron Combination for calibration (post moriond recommendation)
-process.load('EgammaAnalysis/ElectronTools/calibratedElectrons_cfi')
-process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService",
-    calibratedElectrons = cms.PSet(
-      initialSeed = cms.untracked.uint32(1),
-      engineName = cms.untracked.string('TRandom3')
-    ),
-)
-if (isRealData):
-  process.calibratedElectrons.isMC = cms.bool(False)
-  process.calibratedElectrons.inputDataset = cms.string("22Jan2013ReReco")
-else:
-  process.calibratedElectrons.isMC = cms.bool(True)
-  process.calibratedElectrons.inputDataset = cms.string("Summer12_LegacyPaper")
+#process.load('EgammaAnalysis/ElectronTools/calibratedElectrons_cfi')
+#process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService",
+#    calibratedElectrons = cms.PSet(
+#      initialSeed = cms.untracked.uint32(1),
+#      engineName = cms.untracked.string('TRandom3')
+#    ),
+#)
+#if (isRealData):
+#  process.calibratedElectrons.isMC = cms.bool(False)
+#  process.calibratedElectrons.inputDataset = cms.string("22Jan2013ReReco")
+#else:
+#  process.calibratedElectrons.isMC = cms.bool(True)
+#  process.calibratedElectrons.inputDataset = cms.string("Summer12_LegacyPaper")
 
-process.calibratedElectrons.updateEnergyError = cms.bool(True)
-process.calibratedElectrons.correctionsType   = cms.int32(2)
-process.calibratedElectrons.combinationType   = cms.int32(3)
-process.calibratedElectrons.lumiRatio         = cms.double(1.0)
-process.calibratedElectrons.verbose           = cms.bool(False)
-process.calibratedElectrons.synchronization   = cms.bool(False)
-process.calibratedElectrons.applyLinearityCorrection = cms.bool(True)
+#process.calibratedElectrons.updateEnergyError = cms.bool(True)
+#process.calibratedElectrons.correctionsType   = cms.int32(2)
+#process.calibratedElectrons.combinationType   = cms.int32(3)
+#process.calibratedElectrons.lumiRatio         = cms.double(1.0)
+#process.calibratedElectrons.verbose           = cms.bool(False)
+#process.calibratedElectrons.synchronization   = cms.bool(False)
+#process.calibratedElectrons.applyLinearityCorrection = cms.bool(True)
 #process.calibratedElectrons.scaleCorrectionsInputPath = cms.string("EgammaAnalysis/ElectronTools/data/scalesMoriond.csv")
 #process.calibratedElectrons.combinationRegressionInputPath = cms.string("EgammaAnalysis/ElectronTools/data/eleEnergyReg2012Weights_V1.root")
 
@@ -493,7 +493,7 @@ process.ntupleProducer   = cms.EDAnalyzer('ntupleProducer',
                                           saveMuons         =    cms.untracked.bool(True),
                                           saveJets          =    cms.untracked.bool(True),
                                           saveElectrons     =    cms.untracked.bool(True),
-                                          saveEleCrystals   =    cms.untracked.bool(True),
+                                          saveEleCrystals   =    cms.untracked.bool(False),
                                           savePhotons       =    cms.untracked.bool(True),
                                           savePhoCrystals   =    cms.untracked.bool(True),
                                           saveMoreEgammaVars=    cms.untracked.bool(True),
@@ -570,9 +570,9 @@ process.ntuplePath = cms.Path(
     * process.ak5PFJetsL1FastL2L3
     * process.ak5JetTracksAssociatorAtVertex
     * process.btagging
-    * process.eleRegressionEnergy
-    * process.calibratedElectrons
-    * process.mvaTrigV0
+#    * process.eleRegressionEnergy
+#    * process.calibratedElectrons
+#    * process.mvaTrigV0
     * process.heepIdNoIso
     * process.heepIdNoIsoEles
     * process.modElectronIso
@@ -580,9 +580,9 @@ process.ntuplePath = cms.Path(
 
 )
 
-process.out = cms.OutputModule("PoolOutputModule",
-                               fileName = cms.untracked.string('myTuple.root'),
-                               SelectEvents   = cms.untracked.PSet( SelectEvents = cms.vstring('ntuplePath')),
-                               outputCommands = cms.untracked.vstring('keep *')
-                               )
-process.outpath = cms.EndPath(process.out)
+#process.out = cms.OutputModule("PoolOutputModule",
+#                               fileName = cms.untracked.string('myTuple.root'),
+#                               SelectEvents   = cms.untracked.PSet( SelectEvents = cms.vstring('ntuplePath')),
+#                               outputCommands = cms.untracked.vstring('keep *')
+#                               )
+#process.outpath = cms.EndPath(process.out)
