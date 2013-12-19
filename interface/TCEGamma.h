@@ -80,7 +80,8 @@ class TCEGamma : public TCPhysObject {
   // crystal stuff
   vector<TCEGamma::CrystalInfo> _crysVect;
   int _nCrystals;
-  
+
+  /*  
   //mip stuff
   float _mipchi2;
   float _miptoten;
@@ -93,7 +94,7 @@ class TCEGamma : public TCPhysObject {
   float _angle;
   float _smin;
   float _smaj;
-  
+  */
  public:
   TCEGamma();
   virtual ~TCEGamma();
@@ -148,7 +149,7 @@ class TCEGamma : public TCPhysObject {
   bool IsInGap() const;
 
   //mip stuff
-  
+  /*
   float MipChi2() const;
   float MipTotEn() const;
   float MipSlope() const;
@@ -160,7 +161,7 @@ class TCEGamma : public TCPhysObject {
   float Angle() const;
   float SMin() const;
   float SMaj() const;
-
+  */
   //bool PassConversion(int lvl) const;
   
   //--------------------------
@@ -214,7 +215,7 @@ class TCEGamma : public TCPhysObject {
   void SetPfIsoNeutral(float);
   void SetPfIsoPhoton(float);
   
-
+  /*
   //mip stuff
   void SetMipChi2(float);
   void SetMipTotEn(float);
@@ -227,7 +228,7 @@ class TCEGamma : public TCPhysObject {
   void SetAngle(float);
   void SetSMin(float);
   void SetSMaj(float);
-
+  */
   ClassDef(TCEGamma, 1);
 };
 

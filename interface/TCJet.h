@@ -15,6 +15,7 @@
 
 class TCJet : public TCPhysObject {
     private:
+  /*
         float _vtxSumPtFrac;
         float _vtxSumPt;
         float _vtxTrackFrac;
@@ -41,7 +42,7 @@ class TCJet : public TCPhysObject {
         // Hgg style Jet Id vars
         float _betaStarClassic;
         float _dR2Mean;
-
+  */
 	int _id_cut_loose;
 	int _id_cut_medium;
 	int _id_cut_tight;
@@ -53,7 +54,7 @@ class TCJet : public TCPhysObject {
         TCJet();
         virtual ~TCJet();
 
-
+	/*
         float ChHadFrac() const;
         float NeuHadFrac() const;
         float ChEmFrac() const;
@@ -80,6 +81,7 @@ class TCJet : public TCPhysObject {
         // Hgg style Jet Id vars
         float BetaStarClassic() const;
         float DR2Mean() const;
+	*/
 	int PuJetIdFlag_cut_loose() const;
 	int PuJetIdFlag_cut_medium() const;
 	int PuJetIdFlag_cut_tight() const;
@@ -87,7 +89,7 @@ class TCJet : public TCPhysObject {
 	int PuJetIdFlag_mva_loose() const;
         int PuJetIdFlag_mva_medium() const;
         int PuJetIdFlag_mva_tight() const;
-
+	/*
         // "set" methods ---------
         void SetVtxSumPtFrac(float f);
         void SetVtxSumPt(float p);
@@ -114,7 +116,7 @@ class TCJet : public TCPhysObject {
         // Hgg style Jet Id vars
         void SetBetaStarClassic(float b);
         void SetDR2Mean(float d);
-
+	*/
 	void SetPuJetIdFlag_cut_loose(int i);
 	void SetPuJetIdFlag_cut_medium(int i);
 	void SetPuJetIdFlag_cut_tight(int i);

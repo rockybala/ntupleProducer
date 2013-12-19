@@ -177,200 +177,70 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 
   if(saveJets_){
 
-    edm::Handle<reco::JetTagCollection> bTagCollectionTCHE;
-    iEvent.getByLabel("trackCountingHighEffBJetTags", bTagCollectionTCHE);
-    const reco::JetTagCollection & bTagsTCHE = *(bTagCollectionTCHE.product());
-
-    edm::Handle<reco::JetTagCollection> bTagCollectionTCHP;
-    iEvent.getByLabel("trackCountingHighPurBJetTags", bTagCollectionTCHP);
-    const reco::JetTagCollection & bTagsTCHP = *(bTagCollectionTCHP.product());
-
-    edm::Handle<reco::JetTagCollection> bTagCollectionSSVHE;
-    iEvent.getByLabel("simpleSecondaryVertexHighEffBJetTags", bTagCollectionSSVHE);
-    const reco::JetTagCollection & bTagsSSVHE = *(bTagCollectionSSVHE.product());
-
-    edm::Handle<reco::JetTagCollection> bTagCollectionJBP;
-    iEvent.getByLabel("jetBProbabilityBJetTags", bTagCollectionJBP);
-    const reco::JetTagCollection & bTagsJBP = *(bTagCollectionJBP.product());
-
-    edm::Handle<reco::JetTagCollection> bTagCollectionCSV;
-    iEvent.getByLabel("combinedSecondaryVertexBJetTags", bTagCollectionCSV);
-    const reco::JetTagCollection & bTagsCSV = *(bTagCollectionCSV.product());
-
-    edm::Handle<reco::JetTagCollection> bTagCollectionCSVMVA;
-    iEvent.getByLabel("combinedSecondaryVertexBJetTags", bTagCollectionCSVMVA);
-    const reco::JetTagCollection & bTagsCSVMVA = *(bTagCollectionCSVMVA.product());
-
-    
-    if(!isRealData){
-      Handle<vector<pat::Jet> > patjets;
-      iEvent.getByLabel(mNoOverlapJet, patjets);
-      int jetCount_pat = 0;
-      for (vector<pat::Jet>::const_iterator ipJet = patjets->begin(); ipJet != patjets->end(); ++ipJet) {
-	TLorentzVector* jetCon_pat_d = new ((*jetCon_pat)[jetCount_pat]) TLorentzVector();
-	jetCon_pat_d->SetPxPyPzE(ipJet->px(), ipJet->py(), ipJet->pz(), ipJet->energy());
-	jetCount_pat++;
-      }
-
-      Handle<vector<pat::Jet> > smearedjets;
-      iEvent.getByLabel(mSmearedPatJet, smearedjets);
-      int jetCount_smear = 0;
-      for (vector<pat::Jet>::const_iterator ipJet = smearedjets->begin(); ipJet != smearedjets->end(); ++ipJet) {
-	TLorentzVector* jetCon_smear_d = new ((*jetCon_smear)[jetCount_smear]) TLorentzVector();
-        jetCon_smear_d->SetPxPyPzE(ipJet->px(), ipJet->py(), ipJet->pz(), ipJet->energy());
-	jetCount_smear++;
-      }
-
-
-    }
-
-    //Have to have this because pu jet id requires to match to the ref_base only possible with View.
-    edm::Handle<edm::View<reco::PFJet> > jets_pu;
-    iEvent.getByLabel("ak5PFJets",jets_pu);
-
     Handle<ValueMap<float> > puJetIdMVA;
-    iEvent.getByLabel(edm::InputTag("recoPuJetMva","fullDiscriminant"),puJetIdMVA);
+    iEvent.getByLabel(edm::InputTag("puJetMva","fullDiscriminant"),puJetIdMVA);
 
     Handle<ValueMap<int> > puJetIdFlagMVA;
-    iEvent.getByLabel(edm::InputTag("recoPuJetMva","fullId"),puJetIdFlagMVA);
+    iEvent.getByLabel(edm::InputTag("puJetMva","fullId"),puJetIdFlagMVA);
 
     Handle<ValueMap<float> > puJetIdCut;
-    iEvent.getByLabel(edm::InputTag("recoPuJetMva","cutbasedDiscriminant"),puJetIdCut);
+    iEvent.getByLabel(edm::InputTag("puJetMva","cutbasedDiscriminant"),puJetIdCut);
 
     Handle<ValueMap<int> > puJetIdFlagCut;
-    iEvent.getByLabel(edm::InputTag("recoPuJetMva","cutbasedId"),puJetIdFlagCut);
+    iEvent.getByLabel(edm::InputTag("puJetMva","cutbasedId"),puJetIdFlagCut);
+    
 
-    Handle<vector<reco::PFJet> > jets;
-    iEvent.getByLabel(jetTag_, jets);
+    Handle<vector<pat::Jet> > patjets;
+    edm::Handle<edm::View<pat::Jet> > patjets_pu;
 
-    int i_jet = -1;
-    for (vector<reco::PFJet>::const_iterator iJet = jets->begin(); iJet != jets->end(); ++iJet) {
+    if(isRealData){
+      iEvent.getByLabel(mNoOverlapJet, patjets);
+      iEvent.getByLabel(mNoOverlapJet,patjets_pu);   }
+
+    else{      
+      iEvent.getByLabel(mSmearedPatJet, patjets);                                                                                  
+      iEvent.getByLabel(mSmearedPatJet,patjets_pu);  }
+    
+    int jetCount_pat = 0;
+    int i_jet = 0;
+    for (vector<pat::Jet>::const_iterator ipJet = patjets->begin(); ipJet != patjets->end(); ++ipJet) {
       i_jet++;
+      if(ipJet->pt() < 10.) continue;
+      TCJet* jetCon (new ((*patJets)[jetCount]) TCJet);
 
-      if (iJet->pt() < 10.) continue;
-
-      TCJet* jetCon (new ((*recoJets)[jetCount]) TCJet);
-
-      //float mva   = (*puJetIdMVA)[jets_pu->refAt(i_jet)];
-      int  idflag = (*puJetIdFlagMVA)[jets_pu->refAt(i_jet)];
-
-      //cout << "idflag: " << idflag << " mva: " << mva << endl;
-      if( PileupJetIdentifier::passJetId( idflag, PileupJetIdentifier::kLoose )){
-	jetCon->SetPuJetIdFlag_MVA_loose(1); }
-      else jetCon->SetPuJetIdFlag_MVA_loose(0);
-      
-      if( PileupJetIdentifier::passJetId( idflag, PileupJetIdentifier::kMedium )) {
-	jetCon->SetPuJetIdFlag_MVA_medium(1); }
-      else jetCon->SetPuJetIdFlag_MVA_medium(0);
-
-      if( PileupJetIdentifier::passJetId( idflag, PileupJetIdentifier::kTight )) {
-	jetCon->SetPuJetIdFlag_MVA_tight(1); }
-      else jetCon->SetPuJetIdFlag_MVA_tight(0);
-
-      // Cut Based
-
-      //float mva_cut   = (*puJetIdCut)[jets_pu->refAt(i_jet)];
-      int  idflag_cut = (*puJetIdFlagCut)[jets_pu->refAt(i_jet)];
-
-      //cout << "idflag: " << idflag << " mva: " << mva << endl;                                    
-      if( PileupJetIdentifier::passJetId( idflag_cut, PileupJetIdentifier::kLoose )){
-        jetCon->SetPuJetIdFlag_cut_loose(1); }
-      else jetCon->SetPuJetIdFlag_cut_loose(0);
-      
-      if( PileupJetIdentifier::passJetId( idflag_cut, PileupJetIdentifier::kMedium )) {
-        jetCon->SetPuJetIdFlag_cut_medium(1); }
-      else jetCon->SetPuJetIdFlag_cut_medium(0);
-
-      if( PileupJetIdentifier::passJetId( idflag_cut, PileupJetIdentifier::kTight )) {
-        jetCon->SetPuJetIdFlag_cut_tight(1); }
-      else jetCon->SetPuJetIdFlag_cut_tight(0);
-
-
-      jetCon->SetPxPyPzE(iJet->px(), iJet->py(), iJet->pz(), iJet->energy());
+      jetCon->SetPxPyPzE(ipJet->px(), ipJet->py(), ipJet->pz(), ipJet->energy());
       jetCon->SetVtx(0., 0., 0.);
-      jetCon->SetChHadFrac(iJet->chargedHadronEnergyFraction());
-      jetCon->SetNeuHadFrac(iJet->neutralHadronEnergyFraction());
-      jetCon->SetChEmFrac(iJet->chargedEmEnergyFraction());
-      jetCon->SetNeuEmFrac(iJet->neutralEmEnergyFraction());
-      jetCon->SetNumConstit(iJet->chargedMultiplicity() + iJet->neutralMultiplicity());
-      jetCon->SetNumChPart(iJet->chargedMultiplicity());
 
-      //jetCon->SetJetFlavor(iJet->partonFlavour());
-
-      jetCon->SetUncertaintyJES(-1);
-
-      jetCon->SetBDiscriminatorMap("TCHE", MatchBTagsToJets(bTagsTCHE, *iJet));
-      jetCon->SetBDiscriminatorMap("TCHP", MatchBTagsToJets(bTagsTCHP, *iJet));
-      jetCon->SetBDiscriminatorMap("SSVHE", MatchBTagsToJets(bTagsSSVHE, *iJet));
-      jetCon->SetBDiscriminatorMap("JBP", MatchBTagsToJets(bTagsJBP, *iJet));
-      jetCon->SetBDiscriminatorMap("CSV", MatchBTagsToJets(bTagsCSV, *iJet));
-      jetCon->SetBDiscriminatorMap("CSVMVA", MatchBTagsToJets(bTagsCSVMVA, *iJet));
-
-      /////////////////////
-      // Get Hgg Id vars //
-      /////////////////////
-
-      PileupJetIdentifier puIdentifier;
-      // giving uncorrected input, must double check on this
-      float jec = 1.;
-      // jet corrector
-      if( jecCor.get() == 0 ) {
-        initJetEnergyCorrector( iSetup, iEvent.isRealData() );
-      }
-      jecCor->setJetPt(iJet->pt());
-      jecCor->setJetEta(iJet->eta());
-      jecCor->setJetA(iJet->jetArea());
-      jecCor->setRho(rhoFactor);
-      jec = jecCor->getCorrection();
-      //cout<<"jec:\t"<<jec<<endl;
-      VertexCollection::const_iterator vtx;
-      const VertexCollection & vertexes = *(primaryVtcs.product());
-      vtx = vertexes.begin();
-      while( vtx != vertexes.end() && ( vtx->isFake() || vtx->ndof() < 4 ) ) {
-        ++vtx;
-      }
-      if( vtx == vertexes.end() ) { vtx = vertexes.begin(); }
-      puIdentifier = myPUJetID->computeIdVariables(&(*iJet), jec,  &(*vtx),  vertexes, false);
-      //cout<<"betaStarClassic:\t"<<puIdentifier.betaStarClassic()<<"\t"<<"dR2Mean:\t"<<puIdentifier.dR2Mean()<<endl;
-      jetCon->SetBetaStarClassic(puIdentifier.betaStarClassic());
-      jetCon->SetDR2Mean(puIdentifier.dR2Mean());
-
-      /////////////////////////
-      // Associate to vertex //
-      /////////////////////////
-
-      associateJetToVertex(*iJet, primaryVtcs, jetCon);
-
-      ++jetCount;
+      int  idflag = (*puJetIdFlagMVA)[patjets_pu->refAt(i_jet)];
+      jetCon->SetPuJetIdFlag_MVA_loose(PileupJetIdentifier::passJetId( idflag, PileupJetIdentifier::kLoose ));
+      jetCon->SetPuJetIdFlag_MVA_medium(PileupJetIdentifier::passJetId( idflag, PileupJetIdentifier::kMedium));
+      jetCon->SetPuJetIdFlag_MVA_tight(PileupJetIdentifier::passJetId( idflag, PileupJetIdentifier::kTight ));
+      
+      int  idflag_cut = (*puJetIdFlagCut)[patjets_pu->refAt(i_jet)];
+      jetCon->SetPuJetIdFlag_cut_loose(PileupJetIdentifier::passJetId( idflag_cut, PileupJetIdentifier::kLoose ));
+      jetCon->SetPuJetIdFlag_cut_medium(PileupJetIdentifier::passJetId( idflag_cut, PileupJetIdentifier::kMedium));
+      jetCon->SetPuJetIdFlag_cut_tight(PileupJetIdentifier::passJetId( idflag_cut, PileupJetIdentifier::kTight ));
+      
+      jetCount_pat++;
     }
   }
 
   if(saveMET_){
-
-    edm::Handle<edm::View<pat::MET> > pfmet;
-    iEvent.getByLabel(mMetPf, pfmet);
-    if (pfmet->size() == 0) {    pfMET->SetMagPhi(-1,-10);    pfMET->SetSumEt(-1);    pfMET->SetSignificance(-1); }
-    else { pfMET->SetMagPhi((*pfmet)[0].et(), (*pfmet)[0].phi());   pfMET->SetSumEt((*pfmet)[0].sumEt());   pfMET->SetSignificance((*pfmet)[0].significance());}
-  
-    edm::Handle<edm::View<pat::MET> > metraw;
-    iEvent.getByLabel(mMetRaw, metraw);
-    if (metraw->size() == 0) {    rawMET->SetMagPhi(-1,-10);    rawMET->SetSumEt(-1);    rawMET->SetSignificance(-1); }
-    else { rawMET->SetMagPhi((*metraw)[0].et(), (*metraw)[0].phi());   rawMET->SetSumEt((*metraw)[0].sumEt());   rawMET->SetSignificance((*metraw)[0].significance());}
-
+    
     edm::Handle<edm::View<pat::MET> > met01;
     iEvent.getByLabel(mMetType01, met01);
     if (met01->size() == 0) {    corrMET->SetMagPhi(-1,-10);    corrMET->SetSumEt(-1);    corrMET->SetSignificance(-1); }
     else { corrMET->SetMagPhi((*met01)[0].et(), (*met01)[0].phi());   corrMET->SetSumEt((*met01)[0].sumEt());   corrMET->SetSignificance((*met01)[0].significance());}
-
+    
     edm::Handle<edm::View<pat::MET> > metMVA;
     iEvent.getByLabel(mMetMVA, metMVA);
     if (metMVA->size() == 0) {    mvaMET->SetMagPhi(-1,-10);    mvaMET->SetSumEt(-1);    mvaMET->SetSignificance(-1); }
     else { mvaMET->SetMagPhi((*metMVA)[0].et(), (*metMVA)[0].phi());   mvaMET->SetSumEt((*metMVA)[0].sumEt());   mvaMET->SetSignificance((*metMVA)[0].significance());}
-
+    
   }
-
+  
   if(saveMETExtra_){
-
+    
     if (!isRealData){
       edm::Handle<pat::METCollection> metJERup;
       iEvent.getByLabel(mMetJERup, metJERup);
@@ -1383,8 +1253,7 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
 
   beamSpot->Clear();
   primaryVtx    -> Clear("C");
-  recoJets      -> Clear("C");
-  //recoJPT       -> Clear("C");
+  patJets       -> Clear("C");
   recoMuons     -> Clear("C");
   recoElectrons -> Clear("C");
   recoPhotons   -> Clear("C");
@@ -1392,7 +1261,7 @@ void ntupleProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iS
   genJets       -> Clear("C");
   genParticles  -> Clear("C");
 }
-
+  
 // ------------ method called once each job just before starting event loop  ------------
 void  ntupleProducer::beginJob()
 {
@@ -1400,8 +1269,7 @@ void  ntupleProducer::beginJob()
   jobTree        = fs->make<TTree>("jobTree", "jobTree");
 
   primaryVtx     = new TClonesArray("TCPrimaryVtx");
-  recoJets       = new TClonesArray("TCJet");
-  //recoJPT        = new TClonesArray("TCJet");
+  patJets        = new TClonesArray("TCJet");
   recoElectrons  = new TClonesArray("TCElectron");
   recoMuons      = new TClonesArray("TCMuon");
   recoPhotons    = new TClonesArray("TCPhoton");
@@ -1417,16 +1285,11 @@ void  ntupleProducer::beginJob()
     pho_mva_down   = new TClonesArray("TLorentzVector");
   }
 
-  jetCon_pat     = new TClonesArray("TLorentzVector");
-  jetCon_smear   = new TClonesArray("TLorentzVector");
- 
-  pfMET.reset(  new TCMET);
-  rawMET.reset(  new TCMET);  
-  corrMET.reset(  new TCMET);  
-  mvaMET.reset(  new TCMET);  
+  corrMET.reset(new TCMET);  
+  mvaMET.reset(new TCMET);  
 
   if(saveMETExtra_){
-
+    
     jerUpMET.reset(  new TCMET);
     jerDownMET.reset(  new TCMET);
     jerUpMVAMET.reset(  new TCMET);
@@ -1458,17 +1321,10 @@ void  ntupleProducer::beginJob()
   eventTree->Branch("pho_mva_down", &pho_mva_down, 6400, 0);
   }
 
-  eventTree->Branch("jetCon_pat", &jetCon_pat, 6400,0);
-  eventTree->Branch("jetCon_smear", &jetCon_smear, 6400,0);
-
-  eventTree->Branch("recoJets",     &recoJets,       6400, 0);
-  //eventTree->Branch("recoJPT",      &recoJPT,        6400, 0);
+  eventTree->Branch("patJets", &patJets, 6400,0);
   eventTree->Branch("recoElectrons",&recoElectrons,  6400, 0);
   eventTree->Branch("recoMuons",    &recoMuons,      6400, 0);
   eventTree->Branch("recoPhotons",  &recoPhotons,    6400, 0);
-
-  eventTree->Branch("pfMET",         pfMET.get(),     6400, 0);
-  eventTree->Branch("rawMET",        rawMET.get(),     6400, 0);
   eventTree->Branch("corrMET",       corrMET.get(),     6400, 0);
   eventTree->Branch("mvaMET",        mvaMET.get(),     6400, 0);
 
@@ -1629,7 +1485,7 @@ bool ntupleProducer::isFilteredOutScraping( const edm::Event& iEvent, const edm:
   return !accepted;  //if filtered out it's not accepted.
 }
 
-
+/*
 bool ntupleProducer::associateJetToVertex(reco::PFJet inJet, Handle<reco::VertexCollection> vtxCollection, TCJet *outJet)
 {
   if(fabs(inJet.eta()) > 2.5){
@@ -1725,7 +1581,7 @@ bool ntupleProducer::associateJetToVertex(reco::PFJet inJet, Handle<reco::Vertex
 
   return true;
 }
-
+*/
 
 void ntupleProducer::electronMVA(const reco::GsfElectron* iElectron, TCElectron* eleCon,
     const edm::Event& iEvent, const edm::EventSetup& iSetup, const reco::PFCandidateCollection& PFCandidates, float Rho)

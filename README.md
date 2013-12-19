@@ -30,13 +30,9 @@ Instructions for Users
   cvs co -r b5_3_X_cvMEtCorr_2013Feb22 DataFormats/METReco 
   cvs co -r V06-05-06-10 DataFormats/PatCandidates
   cvs co -r V00-02-15 DataFormats/StdDictionaries
-  #cvs co -r MM_53X_2013Jun17 JetMETCorrections/METPUSubtraction #not tagged yet
-  #cvs co -r V04-06-15 JetMETCorrections/Type1MET #not tagged yet
   cvs co -r V08-09-57 PhysicsTools/PatAlgos
-  #cvs co -r b5_3_X_cvMEtCorr_2013Feb25 PhysicsTools/PatUtils #not tagged yet
   cvs co -r V00-03-34 PhysicsTools/SelectorUtils
   cvs co -r b5_3_X_cvMEtCorr_2013Feb25 RecoMET/METAlgorithms
-  cvs co -r b5_3_X_cvMEtCorr_2013Feb25 RecoJets/JetProducers 
   cvs co -r V00-00-08 RecoMET/METAnalyzers 
   cvs co -r V00-00-13-01 RecoMET/METFilters 
   cvs co -r V03-03-12-02 RecoMET/METProducers
@@ -90,7 +86,8 @@ Instructions for Users
  cvs co -r V00-02-14 DataFormats/StdDictionaries
  cp NWU/ntupleProducer/patches/classes.h DataFormats/StdDictionaries/src/classes.h
  cp NWU/ntupleProducer/patches/classes_def.xml DataFormats/StdDictionaries/src/classes_def.xml
- cp NWU/ntupleProducer/patches/PileupJet* RecoJets/JetProducers/python/
+ cp NWU/ntupleProducer/patches/RecoJets.tar.gz .
+ tar -xvf RecoJets.tar.gz
  cp NWU/ntupleProducer/patches/PFMETAlgorithmMVA.cc JetMETCorrections/METPUSubtraction/src/. 
  scram b -j 12
 ```

@@ -224,7 +224,7 @@ class ntupleProducer : public edm::EDAnalyzer {
   
   virtual bool  triggerDecision(edm::Handle<edm::TriggerResults>& hltR, int iTrigger);
   virtual float sumPtSquared(const Vertex& v);
-  virtual bool  associateJetToVertex(reco::PFJet inJet, Handle<reco::VertexCollection> vtxCollection, TCJet* outJet);   
+  //virtual bool  associateJetToVertex(reco::PFJet inJet, Handle<reco::VertexCollection> vtxCollection, TCJet* outJet);   
   virtual void  electronMVA(const reco::GsfElectron* iElectron, TCElectron* eleCon, const edm::Event& iEvent,const edm::EventSetup& iSetup, const reco::PFCandidateCollection& PFCandidates, float Rho);
   virtual bool  isFilteredOutScraping(const edm::Event& iEvent, const edm::EventSetup& iSetup, int numtrack=10, double thresh=0.25);
   virtual float MatchBTagsToJets(const reco::JetTagCollection, const reco::PFJet);
@@ -345,7 +345,7 @@ class ntupleProducer : public edm::EDAnalyzer {
   double SCFPRemovalCone_;
   
   //Physics object containers
-  TClonesArray* recoJets;
+  TClonesArray* patJets;
   TClonesArray* recoJPT;
   TClonesArray* recoMuons;
   TClonesArray* recoElectrons;
@@ -361,9 +361,8 @@ class ntupleProducer : public edm::EDAnalyzer {
 
   TClonesArray* jetCon_pat;
   TClonesArray* jetCon_smear;
+  
 
-  auto_ptr<TCMET> pfMET;
-  auto_ptr<TCMET> rawMET;
   auto_ptr<TCMET> corrMET;
   auto_ptr<TCMET> mvaMET;
 

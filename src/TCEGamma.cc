@@ -4,6 +4,7 @@
 
 TCEGamma::TCEGamma():
 
+  /*
   _roundness(-99),
   _angle(-99),
   _smin(-99),
@@ -15,6 +16,8 @@ TCEGamma::TCEGamma():
   _mipintercept(-99),
   _mipnhitcone(-99),
   _mipishalo(-99),
+  */
+
 
   _isEB(false),
   _isEE(false),
@@ -177,6 +180,7 @@ float TCEGamma::PfIsoPhoton() const {
   return _pfIsoPhoton;
 }
 
+/*
 //mip stuff
 float TCEGamma::MipChi2() const {
   return _mipchi2;
@@ -217,7 +221,7 @@ float TCEGamma::SMin() const{
 float TCEGamma::SMaj() const{
   return _smaj;
 }
-
+*/
 //------------------------------------------------
 // "set" methods ---------------------------------------------
 //------------------------------------------------------------------------
@@ -330,6 +334,7 @@ void TCEGamma::SetPfIsoPhoton(float f) {
   _pfIsoPhoton = f;
 }
 
+/*
 //mip stuff                                                                                         
 void TCEGamma::SetMipChi2(float mchi){
   _mipchi2 = mchi;
@@ -370,3 +375,4 @@ void TCEGamma::SetSMin(float sm){
 void TCEGamma::SetSMaj(float sm2){
   _smaj = sm2;
 }
+*/

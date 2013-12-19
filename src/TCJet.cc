@@ -18,7 +18,7 @@ TCJet::~TCJet() {
 // "get" methods -------------------------------------
 
 using namespace std;
-
+/*
 float TCJet::ChHadFrac() const {
    return _chHadFrac;
 }
@@ -88,7 +88,7 @@ float TCJet::BetaStarClassic() const {
 float TCJet::DR2Mean() const {
   return _dR2Mean;
 }
-
+*/
 int TCJet::PuJetIdFlag_cut_loose() const{
   return _id_cut_loose;
 }
@@ -115,7 +115,7 @@ int TCJet::PuJetIdFlag_mva_tight() const{
 
 // "set" methods ---------------------------------------------
 
-
+/*
 void TCJet::SetVtxSumPtFrac(float f){
    _vtxSumPtFrac = f;
 }  
@@ -184,7 +184,7 @@ void TCJet::SetBetaStarClassic(float b) {
 void TCJet::SetDR2Mean(float d) {
   _dR2Mean = d;
 }
-
+*/
 void TCJet::SetPuJetIdFlag_cut_loose(int i){
   _id_cut_loose = i;
 }

@@ -197,28 +197,28 @@ process.kt6PFJetsIso.Rho_EtaMax = cms.double(2.5)
 from RecoJets.JetProducers.PileupJetIDParams_cfi import *
 
 process.load("RecoJets.JetProducers.PileupJetIDSequence_cff")
-from RecoJets.JetProducers.PileupJetIDSequence_cff import *
+#from RecoJets.JetProducers.PileupJetIDSequence_cff import *
 
 ## The final MVA has to be evaluated on corrected jets, thus the JEC have to be fed to the producer. The producer can run both on corrected and uncorrected jets, provided that the parameters are properly set. The snippet below shows how to run on a collection of uncorrected jets. To run on corrected reco jets, set the applyJec flag to False and the inputIsCorrected to True. 
 #
-process.recoPuJetId = puJetId.clone(
-    jets = cms.InputTag("ak5PFJets"),
+#process.recoPuJetId = puJetId.clone(
+#    jets = cms.InputTag("ak5PFJets"),
     #jets = cms.InputTag("ak5PFJetsL1FastL2L3"),
-    applyJec = cms.bool(True),
-    inputIsCorrected = cms.bool(False),
-       )
+#    applyJec = cms.bool(True),
+#    inputIsCorrected = cms.bool(False),
+#       )
 
-process.recoPuJetMva = puJetMva.clone(
-       jets = cms.InputTag("ak5PFJets"),
-       #jets = cms.InputTag("ak5PFJetsL1FastL2L3"),
-       jetids = cms.InputTag("recoPuJetId"),
-       applyJec = cms.bool(True),
-       inputIsCorrected = cms.bool(False),
-       )
+##process.recoPuJetMva = puJetMva.clone(
+#       jets = cms.InputTag("ak5PFJets"),
+#       #jets = cms.InputTag("ak5PFJetsL1FastL2L3"),
+#       jetids = cms.InputTag("recoPuJetId"),
+#       applyJec = cms.bool(True),
+#       inputIsCorrected = cms.bool(False),
+#       )
 
 
 
-recoPuJetIdSqeuence = cms.Sequence(process.recoPuJetId * process.recoPuJetMva )
+#recoPuJetIdSqeuence = cms.Sequence(process.recoPuJetId * process.recoPuJetMva )
 
 
 # global options
@@ -562,7 +562,8 @@ process.ntuplePath = cms.Path(
     * process.pfType1MEtUncertaintySequence
     * process.pfMVAMEtUncertaintySequence
     * AllFilters
-    * recoPuJetIdSqeuence    
+    #* recoPuJetIdSqeuence    
+    * process.puJetIdSqeuence
     * process.goodOfflinePrimaryVertices
     * process.pfNoPUSeq
     * process.kt6PFJetsIso
@@ -579,9 +580,9 @@ process.ntuplePath = cms.Path(
 
 )
 
-#process.out = cms.OutputModule("PoolOutputModule",
-#                               fileName = cms.untracked.string('myTuple.root'),
-#                               SelectEvents   = cms.untracked.PSet( SelectEvents = cms.vstring('ntuplePath')),
-#                               outputCommands = cms.untracked.vstring('keep *')
-#                               )
-#process.outpath = cms.EndPath(process.out)
+process.out = cms.OutputModule("PoolOutputModule",
+                               fileName = cms.untracked.string('myTuple.root'),
+                               SelectEvents   = cms.untracked.PSet( SelectEvents = cms.vstring('ntuplePath')),
+                               outputCommands = cms.untracked.vstring('keep *')
+                               )
+process.outpath = cms.EndPath(process.out)
